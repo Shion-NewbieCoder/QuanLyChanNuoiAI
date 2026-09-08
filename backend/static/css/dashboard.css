@@ -1,0 +1,49 @@
+:root {
+  --farm-green: #1f6f4a;
+  --farm-green-soft: #e8f4ee;
+}
+
+body {
+  color: #17211c;
+}
+
+.dashboard-sidebar {
+  background: #fff;
+  border-right: 1px solid #e5e7eb;
+}
+
+.dashboard-sidebar .nav-link {
+  color: #45534b;
+}
+
+.dashboard-sidebar .nav-link:hover,
+.dashboard-sidebar .nav-link:focus,
+.dashboard-sidebar .nav-link.active {
+  background: var(--farm-green-soft);
+  color: var(--farm-green);
+}
+
+.dashboard-card {
+  border-top: 4px solid var(--farm-green) !important;
+}
+
+.empty-state {
+  color: #66736c;
+}
+
+@media (max-width: 991.98px) {
+  .dashboard-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  .dashboard-sidebar .nav {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: 0.25rem;
+  }
+
+  .dashboard-sidebar .nav-link {
+    white-space: nowrap;
+  }
+}

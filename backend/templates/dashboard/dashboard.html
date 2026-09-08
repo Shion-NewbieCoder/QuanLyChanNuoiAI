@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Tổng quan | Nông trại AI{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+  <div class="row min-vh-100">
+    <aside class="col-12 col-lg-2 dashboard-sidebar p-3 p-lg-4">
+      <p class="text-uppercase small fw-semibold text-secondary mb-2">Danh mục</p>
+      <nav class="nav nav-pills flex-lg-column gap-1" aria-label="Điều hướng chính">
+        <a class="nav-link active" aria-current="page" href="#overview">Tổng quan</a>
+        <a class="nav-link" href="{% url 'herd-list' %}">Đàn</a>
+        <a class="nav-link" href="{% url 'pen-list' %}">Chuồng</a>
+        <a class="nav-link" href="{% url 'carelog-list' %}">Chăm sóc</a>
+        <a class="nav-link" href="{% url 'vaccineschedule-list' %}">Vaccine</a>
+        <a class="nav-link" href="{% url 'growthrecord-list' %}">Tăng trưởng</a>
+        <a class="nav-link" href="{% url 'reproductionrecord-list' %}">Sinh sản</a>
+        <a class="nav-link" href="{% url 'salerecord-list' %}">Xuất bán</a>
+        {% if can_view_statistics %}
+          <a class="nav-link" href="#statistics">Thống kê</a>
+        {% endif %}
+        {% if can_use_ai %}
+          <a class="nav-link" href="#ai-assistant">AI Assistant</a>
+        {% endif %}
+      </nav>
+    </aside>
+
+    <main class="col-12 col-lg-10 p-3 p-md-4 p-xl-5" id="overview">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-4">
+        <div>
+          <p class="text-success text-uppercase fw-semibold small mb-1">Bảng điều hành</p>
+          <h1 class="display-6 fw-bold mb-1">Tổng quan nông trại</h1>
+          <p class="text-secondary mb-0">Dữ liệu nghiệp vụ là nguồn thông tin chính thức.</p>
+        </div>
+        <span class="badge text-bg-light border px-3 py-2">Vai trò: {{ effective_role }}</span>
+      </div>
+
+      {% if dashboard_error %}
+        <div class="alert alert-danger" role="alert">{{ dashboard_error }}</div>
+      {% else %}
+        <div class="visually-hidden" role="status" aria-live="polite">Dữ liệu dashboard đã tải xong.</div>
+      {% endif %}
+
+      <section aria-labelledby="kpi-heading" class="mb-4">
+        <h2 id="kpi-heading" class="visually-hidden">Chỉ số tổng quan</h2>
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-xl-3">
+            <article class="card dashboard-card h-100 border-0 shadow-sm">
+              <div class="card-body"><p class="text-secondary mb-2">Tổng đàn</p><p class="display-6 fw-bold mb-0">{{ total_herds }}</p></div>
+            </article>
+          </div>
+          <div class="col-12 col-sm-6 col-xl-3">
+            <article class="card dashboard-card h-100 border-0 shadow-sm">
+              <div class="card-body"><p class="text-secondary mb-2">Lịch cần chú ý</p><p class="display-6 fw-bold mb-0">{{ attention_schedules|length }}</p></div>
+            </article>
+          </div>
+          {% if can_view_statistics %}
+            <div class="col-12 col-sm-6 col-xl-3">
+              <article class="card dashboard-card h-100 border-0 shadow-sm">
+                <div class="card-body"><p class="text-secondary mb-2">Cân nặng trung bình</p><p class="h2 fw-bold mb-0">{{ growth_statistics.average_weight|default:"Chưa có" }}</p></div>
+              </article>
+            </div>
+            <div class="col-12 col-sm-6 col-xl-3">
+              <article class="card dashboard-card h-100 border-0 shadow-sm">
+                <div class="card-body"><p class="text-secondary mb-2">Doanh thu</p><p class="h2 fw-bold mb-0">{{ revenue_total }}</p></div>
+              </article>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <div class="row g-4 mb-4">
+        <section class="col-12 col-xl-7" aria-labelledby="alerts-heading">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 px-4"><h2 id="alerts-heading" class="h5 mb-0">Lịch vaccine cần chú ý</h2></div>
+            <div class="card-body px-0 pb-0">
+              {% if attention_schedules %}
+                <div class="table-responsive">
+                  <table class="table table-hover align-middle mb-0">
+                    <thead><tr><th scope="col">Đàn</th><th scope="col">Vaccine</th><th scope="col">Ngày</th><th scope="col">Phân loại</th></tr></thead>
+                    <tbody>
+                      {% for item in attention_schedules %}
+                        <tr><td>{{ item.schedule.target.code }}</td><td>{{ item.schedule.vaccine }}</td><td>{{ item.schedule.scheduled_date|date:"d/m/Y" }}</td><td><span class="badge text-bg-warning">{{ item.classification }}</span></td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+              {% else %}
+                <p class="empty-state px-4 pb-4 mb-0">Không có lịch vaccine cần chú ý.</p>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+
+        <section class="col-12 col-xl-5" aria-labelledby="growth-heading">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 pt-4 px-4"><h2 id="growth-heading" class="h5 mb-0">Tăng trưởng gần đây</h2></div>
+            <div class="card-body">
+              {% if recent_growth_records %}
+                <ul class="list-group list-group-flush">
+                  {% for record in recent_growth_records %}
+                    <li class="list-group-item px-0 d-flex justify-content-between gap-3"><span>{{ record.target.code }} <small class="text-secondary">{{ record.measurement_date|date:"d/m/Y" }}</small></span><strong>{{ record.weight }}</strong></li>
+                  {% endfor %}
+                </ul>
+              {% else %}
+                <p class="empty-state mb-0">Chưa có dữ liệu tăng trưởng.</p>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {% if can_view_statistics %}
+        <section id="statistics" aria-labelledby="statistics-heading" class="mb-4">
+          <div class="d-flex align-items-center justify-content-between mb-3"><h2 id="statistics-heading" class="h4 mb-0">Thống kê</h2><span class="text-secondary small">Tính từ service hệ thống</span></div>
+          <div class="row g-3">
+            <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h6">Tăng trưởng</h3><p class="display-6 fw-semibold mb-1">{{ growth_statistics.record_count }}</p><p class="text-secondary mb-0">bản ghi đo</p></div></div></div>
+            <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h6">Chi phí</h3><p class="display-6 fw-semibold mb-1">{{ cost_statistics.total_cost }}</p><p class="text-secondary mb-0">tổng chi phí đã ghi nhận</p></div></div></div>
+            <div class="col-12 col-md-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h6">Tỷ lệ hao hụt</h3><p class="display-6 fw-semibold mb-1">{{ loss_statistics.loss_rate_percent|default:"Chưa có" }}{% if loss_statistics.loss_rate_percent %}%{% endif %}</p><p class="text-secondary mb-0">{{ loss_statistics.lost_quantity }} / {{ loss_statistics.opening_quantity }}</p></div></div></div>
+          </div>
+        </section>
+      {% endif %}
+
+      {% if can_use_ai %}
+        <section id="ai-assistant" aria-labelledby="ai-heading">
+          <div class="d-flex align-items-center justify-content-between mb-3"><h2 id="ai-heading" class="h4 mb-0">AI Assistant</h2><span class="badge text-bg-success">Gợi ý từ AI</span></div>
+          <div class="alert alert-light border" role="note">AI chỉ cung cấp gợi ý tham khảo và không thay thế bác sĩ thú y/kỹ sư chăn nuôi.</div>
+          <div class="row g-3">
+            <div class="col-12 col-lg-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h5">Nhắc lịch</h3><p class="text-secondary">Tạo nhắc lịch từ dữ liệu vaccine đã ghi nhận.</p><form method="post" action="{% url 'ai-reminders' %}">{% csrf_token %}<input type="hidden" name="scope" value="all"><button class="btn btn-success" type="submit">Tạo nhắc lịch</button></form></div></div></div>
+            <div class="col-12 col-lg-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h5">Tóm tắt đàn</h3><form method="post" action="{% url 'ai-herd-summary' %}"><label class="form-label" for="summary-herd">Chọn đàn</label><select class="form-select mb-3" id="summary-herd" name="herd_id" required>{% for herd in herds %}<option value="{{ herd.pk }}">{{ herd.code }} — {{ herd.name }}</option>{% empty %}<option value="" disabled>Chưa có đàn</option>{% endfor %}</select>{% csrf_token %}<button class="btn btn-success" type="submit" {% if not herds %}disabled{% endif %}>Tạo tóm tắt</button></form></div></div></div>
+            <div class="col-12 col-lg-4"><div class="card border-0 shadow-sm h-100"><div class="card-body"><h3 class="h5">Báo cáo tăng trưởng</h3><form method="post" action="{% url 'ai-growth-report' %}"><label class="form-label" for="growth-herd">Chọn đàn</label><select class="form-select mb-3" id="growth-herd" name="herd_id" required>{% for herd in herds %}<option value="{{ herd.pk }}">{{ herd.code }} — {{ herd.name }}</option>{% empty %}<option value="" disabled>Chưa có đàn</option>{% endfor %}</select>{% csrf_token %}<button class="btn btn-success" type="submit" {% if not herds %}disabled{% endif %}>Tạo báo cáo</button></form></div></div></div>
+          </div>
+        </section>
+      {% endif %}
+    </main>
+  </div>
+</div>
+{% endblock %}

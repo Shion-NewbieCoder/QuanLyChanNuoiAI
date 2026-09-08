@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <title>Đăng nhập</title>
+  </head>
+  <body>
+    <main>
+      <h1>Đăng nhập</h1>
+      <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <label for="id_username">Tên đăng nhập</label>
+        {{ form.username }}
+        <label for="id_password">Mật khẩu</label>
+        {{ form.password }}
+        <button type="submit">Đăng nhập</button>
+      </form>
+    </main>
+  </body>
+</html>
