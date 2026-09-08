@@ -24,6 +24,9 @@
 - TSK-028 full integration regression PASS.
 - TSK-029 focused security regression PASS.
 - Review/testing handoff: `STATUS: PASS`, `BACKTRACK_REQUIRED: NONE`.
+- BTKN2 Criterion 04 search/filter/sort đã được corrective và verification PASS.
+- BTKN2 Criterion 09 có prompt/response, assisted-code mapping, human review,
+  correction và test evidence tại `AI_CODING_EVIDENCE.md`.
 
 ## 4. Traceability tóm tắt
 
@@ -37,12 +40,13 @@
 | NFR-USAB-001 | UI-001..003 | TSK-025,026 | dashboard tests, Vite build | PASS |
 | PD-SEED-001 | PD-SEED-001 | TSK-027 | seed command/tests | PASS |
 | NFR-TECH-001, delivery | ARCH-001, TSK-030 contract | TSK-030 | README/runbook and Git audit | PASS |
+| BTKN2 Criterion 09 | AI-assisted coding evidence | Corrective Pass 2 | `AI_CODING_EVIDENCE.md`, code/test/Git mapping | PASS |
 
 ## 5. Final test và verification
 
 | Scope | Result |
 |---|---|
-| Backend regression | 249/249 PASS |
+| Backend regression | 266/266 PASS |
 | Focused security regression | 57/57 PASS |
 | Django system check | PASS, 0 issues |
 | Migration drift | NONE |
@@ -87,6 +91,8 @@ Public deployment không thuộc phạm vi acceptance hiện tại; local demo l
 | Issue | Severity | Status | Required action |
 |---|---|---|---|
 | Ban đầu thiếu Git repository và lịch sử “commit rõ ràng” | BLOCKER | RESOLVED | Đã khởi tạo repository đúng root và tạo commit snapshot hiện tại, không backdate. |
+| BTKN2 Criterion 04 ban đầu thiếu CRUD search/filter/order | MAJOR | RESOLVED | Đã thêm restricted query contract, 17 focused tests và regression 266/266. |
+| BTKN2 Criterion 09 ban đầu thiếu AI coding evidence artifact | MAJOR | RESOLVED | Đã thêm representative evidence có prompt, response, code mapping, review, correction và verification; không bịa transcript. |
 
 Không có blocker implementation, test, migration, security hoặc build còn mở.
 

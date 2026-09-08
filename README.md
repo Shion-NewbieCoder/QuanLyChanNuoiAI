@@ -190,6 +190,14 @@ npm run build
 
 Project chưa cấu hình script lint; không có lệnh `npm run lint`. API helper hiện dùng đường dẫn cùng origin, session cookie và CSRF token cho unsafe request.
 
+## Minh chứng sử dụng AI khi lập trình
+
+Các prompt/response tiêu biểu, mapping phần code được hỗ trợ, human review,
+correction và test evidence được ghi trung thực tại
+[AI_CODING_EVIDENCE.md](AI_CODING_EVIDENCE.md). Tài liệu đó là representative
+evidence, không phải transcript đầy đủ và không suy diễn model name,
+timestamp hay code ownership.
+
 ## Kiểm thử và xác minh
 
 Backend, từ `backend/` với `DJANGO_SECRET_KEY` đã đặt:
@@ -209,7 +217,7 @@ npm run build
 
 Evidence gần nhất ngày 2026-09-08:
 
-- Backend: `249/249` tests PASS.
+- Backend: `266/266` tests PASS.
 - Django system check: PASS.
 - Migration drift: NONE; toàn bộ migrations đã áp dụng.
 - `seed_demo`: PASS và idempotent.
