@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="app-layout">
+  <aside class="dashboard-sidebar" id="main-sidebar">
+    <details class="sidebar-disclosure" open>
+      <summary>Danh mục quản lý</summary>
+      <nav class="nav flex-column gap-1" aria-label="Điều hướng chính">
+      {% for item in navigation %}
+        <a class="nav-link {% if active_section == item.section %}active{% endif %}" {% if active_section == item.section %}aria-current="page"{% endif %} href="{{ item.url }}">{{ item.title }}</a>
+      {% endfor %}
+      </nav>
+    </details>
+    <div class="sidebar-footer"><span class="status-dot"></span> Không gian quản lý nông trại</div>
+  </aside>
+  <main class="app-main" id="main-content">
+    <nav aria-label="Đường dẫn" class="small text-secondary mb-3"><a href="{% url 'dashboard' %}">Nông trại</a> <span aria-hidden="true">/</span> {% block breadcrumb %}{{ resource.title|default:"Tổng quan" }}{% endblock %}</nav>
+    {% if messages %}{% for message in messages %}<div class="alert alert-success" role="status">{{ message }}</div>{% endfor %}{% endif %}
+    {% block content %}{% endblock %}
+    <footer class="page-footer">Hệ thống quản lý chăn nuôi · Dữ liệu ghi nhận là nguồn thông tin chính thức.</footer>
+  </main>
+</div>
+{% endblock %}

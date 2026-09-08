@@ -1,0 +1,7 @@
+{% extends "management/shell.html" %}
+{% block title %}Chi tiết {{ resource.title|lower }} | Nông trại AI{% endblock %}
+{% block content %}{% include "management/resource_header.html" %}
+<section class="card form-card"><div class="card-header"><h2 class="h5 mb-0">Chi tiết bản ghi #{{ object.pk }}</h2></div><div class="card-body">
+<dl class="detail-grid">{% for label,cell in details %}<dt>{{ label }}</dt><dd>{% if cell.badge %}<span class="badge status-badge">{{ cell.value }}</span>{% else %}{{ cell.value|linebreaksbr }}{% endif %}</dd>{% endfor %}</dl>
+<div class="form-actions"><a class="btn btn-outline-secondary" href="{{ resource.url }}">Về danh sách</a>{% if can_edit %}<a class="btn btn-success" href="{{ resource.url }}{{ object.pk }}/edit/">Chỉnh sửa</a>{% endif %}{% if can_delete %}<a class="btn btn-outline-danger" href="{{ resource.url }}{{ object.pk }}/delete/">Xóa bản ghi</a>{% endif %}</div>
+</div></section>{% endblock %}

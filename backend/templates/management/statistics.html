@@ -1,0 +1,15 @@
+{% extends "management/shell.html" %}
+{% block title %}Thống kê | Nông trại AI{% endblock %}
+{% block breadcrumb %}Thống kê{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Theo dõi hoạt động</p><h1>Thống kê nông trại</h1><p class="text-secondary">Tổng hợp toàn bộ dữ liệu đã ghi nhận, không dự báo.</p></div></div>
+<div class="row g-3 mb-4">
+<div class="col-sm-6 col-xl-3"><article class="card dashboard-card h-100"><div class="card-body"><h2 class="h6 text-secondary">Doanh thu xuất bán</h2><p class="metric">{{ revenue_total }}</p><p class="small mb-0">Tổng số tiền từ các lần xuất bán</p></div></article></div>
+<div class="col-sm-6 col-xl-3"><article class="card dashboard-card h-100"><div class="card-body"><h2 class="h6 text-secondary">Chi phí đã ghi nhận</h2><p class="metric">{{ cost_statistics.total_cost }}</p><p class="small mb-0">Tổng các khoản chi phí</p></div></article></div>
+<div class="col-sm-6 col-xl-3"><article class="card dashboard-card h-100"><div class="card-body"><h2 class="h6 text-secondary">Cân nặng trung bình</h2><p class="metric">{{ growth_statistics.average_weight|default_if_none:"Chưa có" }}</p><p class="small mb-0">{{ growth_statistics.record_count }} lần đo đã ghi nhận</p></div></article></div>
+<div class="col-sm-6 col-xl-3"><article class="card dashboard-card h-100"><div class="card-body"><h2 class="h6 text-secondary">Tỷ lệ hao hụt</h2><p class="metric">{% if loss_statistics.loss_rate_percent != None %}{{ loss_statistics.loss_rate_percent }}%{% else %}Chưa có{% endif %}</p><p class="small mb-0">Theo kỳ báo cáo đã ghi nhận</p></div></article></div>
+</div>
+<div class="row g-4">
+<section class="col-lg-6"><div class="card h-100"><div class="card-header"><h2 class="h5 mb-0">Chi phí theo nhóm</h2></div><div class="table-responsive"><table class="table mb-0"><thead><tr><th>Nhóm chi phí</th><th class="text-end">Tổng số tiền</th></tr></thead><tbody>{% for label,amount in cost_categories %}<tr><td>{{ label }}</td><td class="text-end">{{ amount }}</td></tr>{% empty %}<tr><td colspan="2" class="empty-state">Chưa có dữ liệu chi phí.</td></tr>{% endfor %}</tbody></table></div></div></section>
+<section class="col-lg-6"><div class="card h-100"><div class="card-header"><h2 class="h5 mb-0">Nguồn dữ liệu thống kê</h2></div><div class="card-body"><dl class="detail-grid"><dt>Số lần đo</dt><dd>{{ growth_statistics.record_count }}</dd><dt>Tổng cân nặng các lần đo</dt><dd>{{ growth_statistics.total_weight }}</dd><dt>Số kỳ báo cáo hao hụt</dt><dd>{{ loss_statistics.record_count }}</dd><dt>Tổng số đầu kỳ</dt><dd>{{ loss_statistics.opening_quantity }}</dd><dt>Tổng hao hụt</dt><dd>{{ loss_statistics.lost_quantity }}</dd></dl><p class="small text-secondary">Số đầu kỳ được cộng theo các báo cáo; không phải số vật nuôi hiện tại. Chi phí dùng các khoản đã ghi nhận, không suy ra từ lượng thức ăn hoặc liều thuốc.</p></div></div></section>
+</div>{% endblock %}

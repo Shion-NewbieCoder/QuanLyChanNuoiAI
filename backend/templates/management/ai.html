@@ -1,0 +1,11 @@
+{% extends "management/shell.html" %}
+{% block title %}AI Assistant | Nông trại AI{% endblock %}
+{% block breadcrumb %}AI Assistant{% endblock %}
+{% block content %}
+<div class="page-heading"><div><p class="eyebrow">Hỗ trợ tổng hợp</p><h1>AI Assistant</h1><p class="text-secondary">Nhắc lịch, tóm tắt đàn và báo cáo tăng trưởng.</p></div><span class="badge status-badge">Gợi ý từ AI</span></div>
+{% if ai_unconfigured and not ai_error %}<div class="alert alert-light border">AI hiện chưa được cấu hình cho bản demo. Các trang quản lý và thống kê vẫn hoạt động bình thường.</div>{% endif %}
+{% if ai_error %}<div class="alert alert-warning" role="alert">{{ ai_error }}</div>{% endif %}
+{% if ai_result %}<section class="card mb-4" aria-live="polite"><div class="card-body"><h2 class="h4">{{ result_title }}</h2><p class="text-secondary">{{ ai_result.source_count }} bản ghi nguồn</p>{% if ai_result.text %}<div class="ai-result">{{ ai_result.text|linebreaksbr }}</div>{% else %}<p>Chưa có đủ dữ liệu phù hợp để tạo nội dung AI. Hãy xem các dữ liệu nguồn và bổ sung khi có thông tin thực tế.</p>{% endif %}</div></section>{% endif %}
+{% if ai_metrics %}<section class="card mb-4"><div class="card-body"><h2 class="h5">Số liệu tăng trưởng đã ghi nhận</h2><dl class="detail-grid">{% for label,value in ai_metrics %}<dt>{{ label }}</dt><dd>{{ value|default_if_none:"Chưa đủ dữ liệu" }}</dd>{% endfor %}</dl></div></section>{% endif %}
+{% include "management/ai_cards.html" %}
+{% endblock %}

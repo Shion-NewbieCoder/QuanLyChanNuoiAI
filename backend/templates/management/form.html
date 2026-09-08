@@ -1,0 +1,10 @@
+{% extends "management/shell.html" %}
+{% block title %}{% if action == 'create' %}Thêm{% else %}Sửa{% endif %} {{ resource.title|lower }} | Nông trại AI{% endblock %}
+{% block content %}
+{% include "management/resource_header.html" %}
+<section class="card form-card"><div class="card-header"><h2 class="h5 mb-0">{% if action == 'create' %}Thêm bản ghi{% else %}Chỉnh sửa bản ghi #{{ object.pk }}{% endif %}</h2></div>
+<form method="post" class="card-body" novalidate>{% csrf_token %}<p class="small text-secondary">Các trường có dấu <span class="text-danger">*</span> là bắt buộc.</p>
+{% include "management/fields.html" %}
+<div class="form-actions"><button type="submit" class="btn btn-success">Lưu bản ghi</button><a href="{{ resource.url }}{% if object %}{{ object.pk }}/{% endif %}" class="btn btn-outline-secondary">Hủy</a></div>
+</form></section>
+{% endblock %}

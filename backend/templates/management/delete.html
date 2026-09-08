@@ -1,0 +1,7 @@
+{% extends "management/shell.html" %}
+{% block title %}Xác nhận xóa | Nông trại AI{% endblock %}
+{% block content %}{% include "management/resource_header.html" %}
+<section class="card form-card"><div class="card-body p-4"><p class="eyebrow text-danger">Xác nhận thao tác</p><h2 class="h4">Xóa bản ghi #{{ object.pk }}?</h2><p>Bạn đang xóa dữ liệu trong mục <strong>{{ resource.title }}</strong>. Thao tác này không thể hoàn tác.</p><p><a href="{{ resource.url }}{{ object.pk }}/">Xem lại chi tiết bản ghi</a></p>
+{% if delete_error %}<div class="alert alert-danger" role="alert">{{ delete_error }}</div>{% endif %}
+<form method="post" class="form-actions">{% csrf_token %}<button class="btn btn-danger" type="submit">Xác nhận xóa</button><a class="btn btn-outline-secondary" href="{{ resource.url }}{{ object.pk }}/">Giữ lại bản ghi</a></form>
+</div></section>{% endblock %}

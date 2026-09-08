@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Không thể mở trang | Nông trại AI{% endblock %}
+{% block body %}<main class="container py-5"><section class="card form-card mx-auto"><div class="card-body p-5"><p class="eyebrow">Thông báo {{ error_status }}</p>
+<h1 class="h3">{% if error_status == 403 %}Bạn không có quyền thực hiện thao tác này{% elif error_status == 404 %}Không tìm thấy trang hoặc bản ghi{% elif error_status == 405 %}Thao tác không được hỗ trợ{% else %}Chưa thể xử lý yêu cầu{% endif %}</h1>
+<p class="text-secondary">{% if error_status == 403 %}Kiểm tra tài khoản đang sử dụng hoặc quay về trang tổng quan.{% elif error_status == 404 %}Đường dẫn có thể không đúng hoặc dữ liệu đã được xóa.{% else %}Vui lòng thử lại sau. Dữ liệu nội bộ được bảo vệ.{% endif %}</p>
+<a class="btn btn-success" href="{% url 'dashboard' %}">Về tổng quan</a> <a class="btn btn-outline-secondary" href="{% url 'login' %}">Đăng nhập</a></div></section></main>{% endblock %}

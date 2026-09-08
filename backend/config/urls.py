@@ -8,6 +8,7 @@ from apps.users.views import protected_operation
 
 urlpatterns = [
     path("", include("apps.dashboard.urls")),
+    path("", include("apps.dashboard.ui_urls")),
     path("api/ai/", include("apps.ai.urls")),
     path(
         "login/",

@@ -55,10 +55,44 @@ cùng `tools/run_demo.py`; không có hai quy trình setup khác nhau.
 - Thống kê tăng trưởng, chi phí, tỷ lệ hao hụt và doanh thu suy ra từ dữ liệu nguồn.
 - AI nhắc lịch vaccine, tóm tắt đàn và báo cáo tăng trưởng.
 - Django Dashboard tại `/dashboard/`.
+- Giao diện Django đầy đủ cho danh sách, chi tiết, thêm, sửa và xác nhận xóa
+  các dữ liệu nghiệp vụ; tìm kiếm/lọc/sắp xếp và nút thao tác theo vai trò.
 - Lệnh `seed_demo` tạo dữ liệu demo xác định, an toàn khi chạy lặp.
 - React/Vite scaffold có helper gọi API cùng origin.
 
-## Công nghệ
+## Sử dụng giao diện quản lý
+
+Sau F5, đăng nhập bằng tài khoản demo. Sidebar dẫn đến các trang HTML sau,
+không cần chạy React/Vite:
+
+| Mục | Đường dẫn |
+|---|---|
+| Tổng quan | `/dashboard/` |
+| Đàn / Cá thể / Nhóm | `/herds/`, `/animals/`, `/animal-groups/` |
+| Chuồng trại | `/pens/` |
+| Chăm sóc / Thức ăn / Thuốc | `/care/`, `/feed/`, `/medicine/` |
+| Lịch vaccine / Lần tiêm | `/vaccines/`, `/vaccination-records/` |
+| Tăng trưởng / Sinh sản / Xuất bán | `/growth/`, `/reproduction/`, `/sales/` |
+| Thống kê / AI | `/statistics/`, `/ai/` |
+
+Các mục nghiệp vụ có nút **Thêm bản ghi**, **Xem**, **Sửa**, **Xóa** theo quyền.
+Xóa cần xác nhận bằng POST; dữ liệu đang được tham chiếu không bị xóa.
+Form chuồng yêu cầu đúng một đối tượng đàn/nhóm/cá thể. Form giữ giá trị và
+hiển thị lỗi khi dữ liệu không hợp lệ. Trạng thái vaccine có danh mục cố định;
+các trường văn bản tự do khác giữ nguyên hợp đồng hiện có.
+
+Trang danh sách gửi `search`, exact filters và `ordering` đến bộ lọc backend
+đã có; phân trang 20 dòng. Thống kê tổng hợp toàn bộ dữ liệu đã ghi nhận qua
+services hiện có. AI trả kết quả trong trang HTML, không lưu kết quả vào CSDL;
+khi chưa có provider, trang hiển thị thông báo an toàn. Không có chatbot hoặc
+chức năng chẩn đoán.
+
+CSS có bố cục desktop/tablet/mobile, bảng cuộn ngang và danh mục thu gọn trên
+màn hình nhỏ. Bootstrap 5.3.3 vẫn tải từ CDN như trước, vì vậy phần trình bày
+Bootstrap cần kết nối mạng. Kiểm thử UI: `python manage.py test apps.dashboard.tests_ui`.
+Chi tiết triển khai và xác minh: [UI_COMPLETION_REPORT.md](UI_COMPLETION_REPORT.md).
+
+## Công nghệ sử dụng
 
 - Backend: Python 3.12+, Django 6.1.1, Django REST Framework 3.18.1.
 - Cơ sở dữ liệu: SQLite.
@@ -276,7 +310,8 @@ npm run build
 
 Evidence gần nhất ngày 2026-09-08:
 
-- Backend: `266/266` tests PASS.
+- Backend sau UI pass: `288/288` tests PASS (266 regression cũ + 22 UI).
+- Focused UI: `22/22` tests PASS; 15 trang chính đã kiểm tra qua HTTP có đăng nhập.
 - Django system check: PASS.
 - Migration drift: NONE; toàn bộ migrations đã áp dụng.
 - `seed_demo`: PASS và idempotent.

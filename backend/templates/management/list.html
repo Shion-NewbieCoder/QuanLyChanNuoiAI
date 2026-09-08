@@ -1,0 +1,22 @@
+{% extends "management/shell.html" %}
+{% block title %}{{ resource.title }} | Nông trại AI{% endblock %}
+{% block content %}
+{% include "management/resource_header.html" %}
+<section class="card mb-4" aria-label="Tìm kiếm và lọc">
+  <form method="get" class="card-body filter-grid">
+    <div class="search-control"><label for="search" class="form-label">Tìm kiếm</label><input id="search" name="search" class="form-control" value="{{ search }}" placeholder="Nhập nội dung cần tìm"></div>
+    {% for filter in filters %}<div><label class="form-label" for="filter-{{ filter.name }}">{{ filter.label }}</label><select class="form-select" id="filter-{{ filter.name }}" name="{{ filter.name }}"><option value="">Tất cả</option>{% for value,label in filter.options %}<option value="{{ value }}" {% if filter.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>{% endfor %}
+    <div><label class="form-label" for="ordering">Sắp xếp</label><select class="form-select" name="ordering" id="ordering"><option value="">Mặc định</option>{% for value,label in sort_options %}<option value="{{ value }}" {% if ordering == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+    <div class="filter-actions"><button type="submit" class="btn btn-success">Áp dụng</button><a class="btn btn-outline-secondary" href="{{ resource.url }}">Đặt lại</a></div>
+  </form>
+</section>
+{% if query_error %}<div class="alert alert-danger" role="alert">{{ query_error }}</div>{% endif %}
+<section class="card">
+  <div class="card-header d-flex justify-content-between align-items-center"><h2 class="h6 mb-0">Danh sách {{ resource.title|lower }}</h2><span class="badge text-bg-light">{{ page.paginator.count }} bản ghi</span></div>
+  {% if rows %}<div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr>{% for label in columns %}<th scope="col">{{ label }}</th>{% endfor %}<th scope="col" class="text-end">Thao tác</th></tr></thead><tbody>
+    {% for row in rows %}<tr>{% for cell in row.cells %}<td>{% if cell.badge %}<span class="badge status-badge {% if cell.raw == 'overdue' %}status-danger{% endif %}">{{ cell.value }}</span>{% else %}{{ cell.value }}{% endif %}</td>{% endfor %}<td><div class="table-actions"><a href="{{ resource.url }}{{ row.pk }}/">Xem</a>{% if can_edit %}<a href="{{ resource.url }}{{ row.pk }}/edit/">Sửa</a>{% endif %}{% if can_delete %}<a class="text-danger" href="{{ resource.url }}{{ row.pk }}/delete/">Xóa</a>{% endif %}</div></td></tr>{% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty-state"><div class="empty-symbol" aria-hidden="true">≡</div><h2 class="h5">Chưa có dữ liệu {{ resource.title|lower }}.</h2><p>Thử thay đổi bộ lọc hoặc quay lại sau khi có dữ liệu mới.</p>{% if can_create %}<a class="btn btn-success" href="{{ resource.url }}create/">Thêm bản ghi đầu tiên</a>{% endif %}</div>{% endif %}
+  {% if page.has_other_pages %}<nav class="card-footer d-flex gap-3 align-items-center justify-content-end" aria-label="Phân trang">{% if page.has_previous %}<a href="?{{ page_query }}&amp;page={{ page.previous_page_number }}">Trước</a>{% endif %}<span>Trang {{ page.number }} / {{ page.paginator.num_pages }}</span>{% if page.has_next %}<a href="?{{ page_query }}&amp;page={{ page.next_page_number }}">Sau</a>{% endif %}</nav>{% endif %}
+</section>
+{% endblock %}

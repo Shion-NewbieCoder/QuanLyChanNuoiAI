@@ -35,6 +35,7 @@ def _empty_context(role):
         "can_use_ai": _role_can(role, "ai"),
         "herds": [],
         "total_herds": 0,
+        "total_recorded_quantity": 0,
         "attention_schedules": [],
         "recent_growth_records": [],
         "recent_sales": [],
@@ -56,6 +57,7 @@ def build_dashboard_context(role):
         {
             "herds": herds,
             "total_herds": len(herds),
+            "total_recorded_quantity": sum(herd.quantity for herd in herds),
             "attention_schedules": [
                 {"schedule": schedule, "classification": classification}
                 for schedule in schedules
@@ -104,4 +106,7 @@ def dashboard(request):
         context["dashboard_error"] = (
             "Không thể tải dữ liệu tổng quan. Vui lòng thử lại."
         )
+    if context["can_use_ai"] and not context["dashboard_error"]:
+        from .ui import ai_cards
+        context["ai_cards"] = ai_cards()
     return render(request, "dashboard/dashboard.html", context)

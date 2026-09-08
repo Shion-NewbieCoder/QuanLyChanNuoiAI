@@ -1,21 +1,14 @@
-<!doctype html>
-<html lang="vi">
-  <head>
-    <meta charset="utf-8">
-    <title>Đăng nhập</title>
-  </head>
-  <body>
-    <main>
-      <h1>Đăng nhập</h1>
-      <form method="post">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
-        <label for="id_username">Tên đăng nhập</label>
-        {{ form.username }}
-        <label for="id_password">Mật khẩu</label>
-        {{ form.password }}
-        <button type="submit">Đăng nhập</button>
-      </form>
-    </main>
-  </body>
-</html>
+{% extends "base.html" %}
+{% block title %}Đăng nhập | Nông trại AI{% endblock %}
+{% block body %}
+<main class="login-layout" id="main-content">
+  <section class="login-intro"><p class="eyebrow">Quản lý chăn nuôi</p><h1>Mỗi ngày chăm sóc.<br>Một nông trại rõ ràng hơn.</h1><p>Theo dõi đàn, ghi nhận hoạt động và xem lại dữ liệu nông trại trong một không gian.</p><div class="login-features"><span>Đàn vật nuôi</span><span>Chăm sóc & vaccine</span><span>Thống kê & báo cáo</span></div></section>
+  <section class="card login-card"><div class="card-body p-4 p-md-5"><p class="eyebrow">Nông trại AI</p><h2 class="h3 mb-2">Đăng nhập</h2><p class="text-secondary mb-4">Sử dụng tài khoản được cấp để tiếp tục.</p>
+  <form method="post">{% csrf_token %}
+    {% if form.errors %}<div class="alert alert-danger" role="alert">Tên đăng nhập hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.</div>{% endif %}
+    <div class="mb-3"><label class="form-label" for="id_username">Tên đăng nhập</label><input class="form-control" type="text" name="username" id="id_username" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}" maxlength="150" required autofocus></div>
+    <div class="mb-4"><label class="form-label" for="id_password">Mật khẩu</label><input class="form-control" type="password" name="password" id="id_password" autocomplete="current-password" required></div>
+    <input type="hidden" name="next" value="{{ next|default:'/dashboard/' }}">
+    <button type="submit" class="btn btn-success w-100">Đăng nhập vào nông trại</button>
+  </form><p class="small text-secondary mt-4 mb-0">Quyền truy cập được áp dụng theo vai trò của tài khoản.</p></div></section>
+</main>{% endblock %}

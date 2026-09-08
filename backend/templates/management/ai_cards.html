@@ -1,0 +1,4 @@
+<div class="alert alert-light border" role="note">AI chỉ cung cấp gợi ý tham khảo và không thay thế bác sĩ thú y/kỹ sư chăn nuôi.</div>
+<div class="row g-3">{% for card in ai_cards %}<section class="col-12 col-xl-4"><div class="card h-100"><div class="card-body"><h3 class="h5">{{ card.title }}</h3><p class="small text-secondary">Dựa trên dữ liệu đã ghi nhận của nông trại.</p>
+<form method="post" action="{% url 'ui-ai' %}" data-endpoint="{{ card.endpoint }}" class="ai-form">{% csrf_token %}<input type="hidden" name="feature" value="{{ card.key }}">{% include "management/fields.html" with form=card.form %}<button type="submit" class="btn btn-success">Tạo {{ card.title|lower }}</button></form>
+</div></div></section>{% endfor %}</div>
