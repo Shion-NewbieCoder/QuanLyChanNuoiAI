@@ -1,6 +1,7 @@
-from rest_framework import viewsets
+from rest_framework import filters, viewsets
 from rest_framework.permissions import IsAuthenticated
 from apps.users.permissions import RoleActionPermission
+from config.filters import ExactFieldFilterBackend
 
 from .models import CareLog, FeedRecord, MedicineRecord
 from .serializers import CareLogSerializer, FeedRecordSerializer, MedicineRecordSerializer
@@ -11,6 +12,10 @@ class CareLogViewSet(viewsets.ModelViewSet):
     serializer_class = CareLogSerializer
     permission_classes = [IsAuthenticated, RoleActionPermission]
     permission_resource = "care"
+    filter_backends = [filters.SearchFilter, ExactFieldFilterBackend, filters.OrderingFilter]
+    search_fields = ["activity", "notes"]
+    exact_filter_fields = ["herd"]
+    ordering_fields = ["recorded_at"]
 
 
 class FeedRecordViewSet(viewsets.ModelViewSet):
@@ -18,6 +23,10 @@ class FeedRecordViewSet(viewsets.ModelViewSet):
     serializer_class = FeedRecordSerializer
     permission_classes = [IsAuthenticated, RoleActionPermission]
     permission_resource = "care"
+    filter_backends = [filters.SearchFilter, ExactFieldFilterBackend, filters.OrderingFilter]
+    search_fields = ["feed_type", "notes"]
+    exact_filter_fields = ["herd"]
+    ordering_fields = ["recorded_at", "quantity"]
 
 
 class MedicineRecordViewSet(viewsets.ModelViewSet):
@@ -25,3 +34,7 @@ class MedicineRecordViewSet(viewsets.ModelViewSet):
     serializer_class = MedicineRecordSerializer
     permission_classes = [IsAuthenticated, RoleActionPermission]
     permission_resource = "care"
+    filter_backends = [filters.SearchFilter, ExactFieldFilterBackend, filters.OrderingFilter]
+    search_fields = ["medicine", "notes"]
+    exact_filter_fields = ["herd"]
+    ordering_fields = ["recorded_at", "dose"]

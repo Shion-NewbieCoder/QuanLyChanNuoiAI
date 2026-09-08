@@ -108,6 +108,30 @@ Các URL chính:
 - Dashboard: `http://127.0.0.1:8000/dashboard/`
 - API nghiệp vụ: `http://127.0.0.1:8000/api/`
 
+### Truy vấn danh sách API
+
+Các list endpoint nghiệp vụ hỗ trợ `?search=<text>`, exact filters theo
+từng resource và `?ordering=<field>`/`?ordering=-<field>`. Các field được
+phép:
+
+| Resource | Search | Exact filters | Ordering |
+|---|---|---|---|
+| Herd | `code`, `name`, `animal_type`, `status` | `status`, `animal_type`, `management_mode` | `code`, `name`, `quantity` |
+| Animal | `code`, `status` | `herd`, `status` | `code` |
+| AnimalGroup | `code`, `name`, `status` | `herd`, `status` | `code`, `name`, `quantity` |
+| Pen | `code`, `name`, `location`, `description`, `status` | `herd`, `animal_group`, `animal`, `status` | `code`, `name` |
+| CareLog | `activity`, `notes` | `herd` | `recorded_at` |
+| FeedRecord | `feed_type`, `notes` | `herd` | `recorded_at`, `quantity` |
+| MedicineRecord | `medicine`, `notes` | `herd` | `recorded_at`, `dose` |
+| VaccineSchedule | `vaccine` | `target`, `status` | `scheduled_date`, `vaccine` |
+| VaccinationRecord | `notes` | `schedule` | `actual_date` |
+| GrowthRecord | `notes` | `target` | `measurement_date`, `weight` |
+| ReproductionRecord | `event_type`, `result`, `notes` | `target` | `event_date` |
+| SaleRecord | `notes` | `target` | `sale_date`, `amount` |
+
+Các tham số có thể kết hợp trên cùng request. Query chỉ giới hạn
+kết quả mà role hiện tại được phép đọc; nó không thay đổi RBAC.
+
 ## Tài khoản demo
 
 Các tài khoản được tạo bởi `python manage.py seed_demo` chỉ dành cho demo học thuật cục bộ:
