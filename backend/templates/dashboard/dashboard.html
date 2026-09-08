@@ -1,7 +1,8 @@
 {% extends "management/shell.html" %}
+{% load static farm_visuals %}
 {% block title %}Tổng quan | Nông trại AI{% endblock %}
 {% block content %}
-      <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-4">
+      <div class="dashboard-welcome"><img class="welcome-illustration" src="{% static 'images/farm/herd.svg' %}" alt="" width="130" height="130">
         <div>
           <p class="text-success text-uppercase fw-semibold small mb-1">Bảng điều hành</p>
           <h1 class="display-6 fw-bold mb-1">Tổng quan nông trại</h1>
@@ -21,23 +22,23 @@
         <div class="row g-3">
           <div class="col-12 col-sm-6 col-xl-3">
             <article class="card dashboard-card h-100 border-0 shadow-sm">
-              <div class="card-body"><p class="text-secondary mb-2">Tổng đàn</p><p class="display-6 fw-bold mb-0">{{ total_herds }}</p></div>
+              <div class="card-body"><p class="kpi-label">{% farm_icon "herds" %} Tổng đàn</p><p class="display-6 fw-bold mb-0">{{ total_herds }}</p></div>
             </article>
           </div>
           <div class="col-12 col-sm-6 col-xl-3">
             <article class="card dashboard-card h-100 border-0 shadow-sm">
-              <div class="card-body"><p class="text-secondary mb-2">Lịch cần chú ý</p><p class="display-6 fw-bold mb-0">{{ attention_schedules|length }}</p></div>
+              <div class="card-body"><p class="kpi-label">{% farm_icon "vaccines" %} Lịch cần chú ý</p><p class="display-6 fw-bold mb-0">{{ attention_schedules|length }}</p></div>
             </article>
           </div>
           {% if can_view_statistics %}
             <div class="col-12 col-sm-6 col-xl-3">
               <article class="card dashboard-card h-100 border-0 shadow-sm">
-                <div class="card-body"><p class="text-secondary mb-2">Cân nặng trung bình</p><p class="h2 fw-bold mb-0">{{ growth_statistics.average_weight|default:"Chưa có" }}</p></div>
+                <div class="card-body"><p class="kpi-label">{% farm_icon "growth" %} Cân nặng trung bình</p><p class="h2 fw-bold mb-0">{{ growth_statistics.average_weight|default:"Chưa có" }}</p></div>
               </article>
             </div>
             <div class="col-12 col-sm-6 col-xl-3">
               <article class="card dashboard-card h-100 border-0 shadow-sm">
-                <div class="card-body"><p class="text-secondary mb-2">Doanh thu</p><p class="h2 fw-bold mb-0">{{ revenue_total }}</p></div>
+                <div class="card-body"><p class="kpi-label">{% farm_icon "sales" %} Doanh thu</p><p class="h2 fw-bold mb-0">{{ revenue_total }}</p></div>
               </article>
             </div>
           {% endif %}

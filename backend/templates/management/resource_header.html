@@ -1,6 +1,7 @@
+{% load static farm_visuals %}
 <div class="page-heading">
-  <div><p class="eyebrow">Quản lý nông trại</p><h1>{{ resource.title }}</h1>{% if resource.hint %}<p class="text-secondary mb-0">{{ resource.hint }}</p>{% endif %}</div>
-  {% if action == "list" and can_create %}<a class="btn btn-success" href="{{ resource.url }}create/">+ Thêm bản ghi</a>{% endif %}
+  <div class="resource-heading">{% if resource.section == 'herds' or resource.section == 'animals' or resource.section == 'animal-groups' or resource.section == 'pens' %}{% farm_avatar object resource.section as heading_avatar %}<img class="section-illustration" src="{% static heading_avatar %}" alt="Hình minh họa {{ resource.title|lower }}" width="92" height="92">{% else %}<span class="section-icon">{% farm_icon resource.section %}</span>{% endif %}<div><p class="eyebrow">Quản lý nông trại</p><h1>{{ resource.title }}</h1>{% if resource.hint %}<p class="text-secondary mb-0">{{ resource.hint }}</p>{% endif %}</div></div>
+  {% if action == "list" and can_create %}<a class="btn btn-success" href="{{ resource.url }}create/">{% farm_icon 'plus' %} Thêm bản ghi</a>{% endif %}
 </div>
 {% if resource.section == "vaccines" %}
 <nav class="section-tabs" aria-label="Quản lý vaccine"><a {% if resource.slug == "vaccines" %}aria-current="page"{% endif %} href="{% url 'ui-vaccines-list' %}">Lịch vaccine</a><a {% if resource.slug == "vaccination-records" %}aria-current="page"{% endif %} href="{% url 'ui-vaccination-records-list' %}">Lần tiêm đã ghi nhận</a></nav>

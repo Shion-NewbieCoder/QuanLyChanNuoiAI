@@ -350,3 +350,37 @@ a:focus-visible,button:focus-visible,summary:focus-visible {
 .card-body {
   padding:18px}
 }
+
+/* Locally bundled farm illustrations and a shared, accessible icon system. */
+.farm-icon { width: 20px; height: 20px; flex-shrink: 0; vertical-align: middle; }
+.dashboard-sidebar .nav-link { display: flex; align-items: center; gap: 11px; }
+.dashboard-sidebar .nav-link .farm-icon { color: #7c9280; }
+.dashboard-sidebar .nav-link.active .farm-icon { color: var(--farm-green); }
+.resource-heading { display: flex; align-items: center; gap: 20px; min-width: 0; }
+.section-illustration { flex-shrink: 0; border-radius: 22px; box-shadow: 0 6px 20px #20392d08; }
+.section-icon { width: 56px; height: 56px; display: grid; place-items: center; flex-shrink: 0; background: #e6efe4; border-radius: 16px; color: var(--farm-green); }
+.section-icon .farm-icon { width: 28px; height: 28px; }
+.record-identity { display: inline-flex; align-items: center; gap: 12px; }
+.record-avatar { object-fit: cover; border-radius: 12px; flex-shrink: 0; border: 1px solid #e1e9dc; }
+.record-identity strong { font-weight: 650; }
+.table-actions a { display: inline-flex; align-items: center; gap: 5px; }
+.table-actions .farm-icon { width: 16px; height: 16px; }
+.dashboard-welcome { display: flex; align-items: center; gap: 24px; padding: 25px 30px; margin-bottom: 28px; background: linear-gradient(110deg, #f0f5e7, #e9f2e9); border: 1px solid #dae6d4; border-radius: 16px; }
+.dashboard-welcome > div { flex: 1; }
+.welcome-illustration { border-radius: 26px; flex-shrink: 0; }
+.kpi-label { display: flex; gap: 9px; align-items: center; margin-bottom: 12px; color: #6d7c70; }
+.kpi-label .farm-icon { box-sizing: content-box; padding: 8px; background: #edf5e8; color: var(--farm-green); border-radius: 10px; }
+@media (max-width: 991.98px) {
+  .dashboard-welcome { flex-wrap: wrap; }
+  .dashboard-welcome > .badge { margin-left: 154px; }
+}
+@media (max-width: 575.98px) {
+  .resource-heading { gap: 13px; align-items: flex-start; }
+  .section-illustration { width: 62px; height: 62px; border-radius: 16px; }
+  .section-icon { width: 42px; height: 42px; border-radius: 12px; }
+  .dashboard-welcome { padding: 18px; gap: 14px; }
+  .welcome-illustration { width: 70px; height: 70px; border-radius: 18px; }
+  .dashboard-welcome > .badge { margin-left: 0; }
+  .dashboard-welcome h1.display-6 { font-size: 1.4rem; }
+  .record-avatar { width: 36px; height: 36px; }
+}

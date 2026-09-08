@@ -133,7 +133,7 @@ def resource_screen(request, slug, action="list", pk=None):
         query.pop("page", None)
         context.update(page=page, page_query=query.urlencode(),
                        columns=[LABELS[name] for name in resource.columns],
-                       rows=[{"pk": obj.pk, "cells": [display_cell(obj, name) for name in resource.columns]} for obj in page])
+                       rows=[{"pk": obj.pk, "object": obj, "cells": [display_cell(obj, name) for name in resource.columns]} for obj in page])
         return render(request, "management/list.html", context, status=400 if context.get("query_error") else 200)
 
     obj = get_object_or_404(queryset, pk=pk) if pk is not None else None
