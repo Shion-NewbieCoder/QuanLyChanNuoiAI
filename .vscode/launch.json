@@ -3,10 +3,10 @@
   "configurations": [
     {
       "name": "Run Livestock Management Demo",
-      "type": "editor-browser",
+      "type": "node-terminal",
       "request": "launch",
-      "url": "http://127.0.0.1:8000/dashboard/",
-      "preLaunchTask": "Start Livestock Management Demo"
+      "command": "cmd.exe /d /c .\\DEMO_PORTABLE\\DEMO.exe",
+      "cwd": "${workspaceFolder}"
     }
   ]
 }

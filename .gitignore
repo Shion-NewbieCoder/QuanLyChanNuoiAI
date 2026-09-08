@@ -45,3 +45,8 @@ coverage/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Generated portable runtime and developer build cache
+build/
+release/
+DEMO_PORTABLE/

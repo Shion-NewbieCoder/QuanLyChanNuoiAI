@@ -2,49 +2,67 @@
 
 Đây là dự án học thuật chạy cục bộ để quản lý dữ liệu chăn nuôi, thống kê từ dữ liệu nguồn và trình bày các báo cáo AI có kiểm soát. Django Dashboard là giao diện chức năng chính; thư mục React/Vite hiện là scaffold và ranh giới tích hợp frontend, không phải một giao diện CRUD nghiệp vụ hoàn chỉnh.
 
-## Chạy nhanh trên Windows / VS Code
+## Cách chạy dành cho giảng viên
 
-### Cách chính
+Giải nén đầy đủ bộ nộp bài, giữ nguyên thư mục `DEMO_PORTABLE` và `_internal`
+bên trong. Bản portable dành cho Windows x64; Python đã được đóng gói sẵn.
+Không cần cài Python, pip, venv, Node/npm, Docker hay quyền quản trị.
 
-1. Cài Python 3.12 trở lên và VS Code hiện hành (VS Code 1.112+ để
-   tự động mở Integrated Browser).
-2. Mở **thư mục gốc project** trong VS Code.
-3. Nhấn **F5** hoặc chọn **Run and Debug**.
-4. Chọn `Run Livestock Management Demo` nếu VS Code hiển thị danh sách.
-5. Chờ bootstrap tự tạo `.venv`, cài backend requirements khi cần, migrate,
-   seed và khởi động Django. Dashboard sẽ mở trong Integrated Browser tại
-   `http://127.0.0.1:8000/dashboard/`.
+**Cách A — mở trực tiếp:** vào `DEMO_PORTABLE`, double-click **DEMO.exe**.
+Không cần VS Code và không cần nhập lệnh terminal.
+
+**Cách B — VS Code:** mở thư mục gốc project → nhấn **F5** → chọn
+**Run Livestock Management Demo**. Cấu hình gọi cùng `DEMO_PORTABLE/DEMO.exe`
+bằng terminal runner có sẵn của VS Code (`node-terminal`); tên runner này
+không có nghĩa ứng dụng cần cài Node. Nếu đã tắt bộ JavaScript Debugger tích
+hợp của VS Code, bật lại hoặc sử dụng cách A.
+
+EXE tự tạo dữ liệu, chạy migration và seed, rồi mở trình duyệt mặc định tại
+`http://127.0.0.1:8000/login/?next=/dashboard/` sau khi HTTP đăng nhập sẵn sàng.
+Giữ cửa sổ demo mở trong lúc sử dụng; đóng cửa sổ hoặc nhấn **Ctrl+C** để dừng.
+Khi gặp `PORT_UNAVAILABLE`, đóng phiên demo/server cũ rồi chạy lại.
+
+Giao diện quản lý và Bootstrap dùng tài nguyên cục bộ, không cần Internet.
+AI chưa cấu hình sẽ hiển thị thông báo an toàn; không có kết quả AI giả.
+Dữ liệu được giữ tại `DEMO_PORTABLE/data/db.sqlite3` qua các lần chạy.
+Hãy giải nén vào thư mục có quyền ghi và sao lưu tệp này khi cần giữ dữ liệu.
 
 Tài khoản demo:
 
 ```text
 Username: demo_manager
 Password: DemoOnly-2026!
+Username: demo_technician
+Password: DemoOnly-2026!
+Username: demo_employee
+Password: DemoOnly-2026!
 ```
 
-Lần chạy đầu cần kết nối mạng nếu máy chưa có các package trong pip
-cache. Không cần activate virtual environment, nhập Django secret, chạy lệnh
-Django hoặc Node/npm thủ công. Nhấn **Ctrl+C** trong terminal demo để dừng server.
+Tài khoản trên chỉ phục vụ chấm bài/thực hành, không dùng cho production.
 
-Launcher demo chạy Django với `--noreload` và chờ HTTP GET `/login/` trả về
-2xx/3xx (tối đa 20 giây) trước khi in đúng một dòng `[DEMO_READY]` để F5 mở
-Integrated Browser. Mở port TCP chưa được coi là sẵn sàng. Bootstrap tiếp tục
-chạy cùng server sau marker; khi sửa code Python, dừng bằng **Ctrl+C** rồi chạy
-lại F5. Nếu gặp `PORT_UNAVAILABLE`, dừng Django cũ trong terminal của nó trước
-khi chạy lại; launcher không tự dừng tiến trình khác.
+## Dành cho phát triển mã nguồn
 
-### Xem ngay trong VS Code
+Cần Python 3.12+ để sửa/chạy mã nguồn hoặc build EXE. `RUN_DEMO.bat` vẫn là
+tiện ích chạy **mã nguồn** cho lập trình viên: tạo `.venv`, cài requirements,
+migrate và seed. Lần cài dependencies đầu cần mạng hoặc pip cache đầy đủ.
+F5 hiện chạy bản đã build; sửa mã nguồn xong phải build lại để F5 nhận thay đổi.
 
-Run configuration dùng `editor-browser` chính thức của VS Code để tự mở
-dashboard bên trong editor sau khi server sẵn sàng; không cần browser extension
-hoặc Chrome/Edge. Nếu dùng VS Code cũ chưa hỗ trợ configuration này, hãy
-cập nhật VS Code; hoặc sau khi chạy `RUN_DEMO.bat`, nhấn **Ctrl+Shift+P**,
-chọn **Simple Browser: Show** và dán URL dashboard.
+Để build trên Windows x64, chạy **BUILD_DEMO.bat** ở gốc dự án. Công cụ dùng
+`.venv` phát triển, cài PyInstaller theo `packaging/requirements-build.txt`,
+đọc `packaging/DEMO.spec`, tạo `DEMO_PORTABLE/DEMO.exe` cùng runtime bên cạnh.
+Đóng EXE trước khi build lại. Build giữ nguyên thư mục `DEMO_PORTABLE/data`;
+khi chuẩn bị bản nộp mới, chỉ đưa dữ liệu demo sạch theo chủ ý của bạn.
+Giảng viên **không chạy BUILD_DEMO.bat**.
 
-### Cách dự phòng
+Runtime sinh ra được Git bỏ qua. Nếu chỉ clone Git, lập trình viên phải build
+trước; khi nộp bài, đính kèm **toàn bộ DEMO_PORTABLE**, không chỉ tệp EXE.
+Mã nguồn dự án vẫn giữ nguyên để xem xét.
 
-Double-click `RUN_DEMO.bat` tại project root. Batch launcher và F5 đều gọi
-cùng `tools/run_demo.py`; không có hai quy trình setup khác nhau.
+Kiểm thử portable dành cho lập trình viên:
+`.\.venv\Scripts\python.exe packaging\verify_portable.py`.
+Harness sao chép riêng runtime ra TEMP có dấu/khoảng trắng, giới hạn PATH
+cho EXE, kiểm tra HTTP/SQLite/process và lưu bằng chứng vào `build/`.
+Chi tiết kết quả và giới hạn kiểm chứng: [PORTABLE_DEMO_REPORT.md](PORTABLE_DEMO_REPORT.md).
 
 ## Chức năng đã triển khai
 
@@ -88,8 +106,8 @@ khi chưa có provider, trang hiển thị thông báo an toàn. Không có chat
 chức năng chẩn đoán.
 
 CSS có bố cục desktop/tablet/mobile, bảng cuộn ngang và danh mục thu gọn trên
-màn hình nhỏ. Bootstrap 5.3.3 vẫn tải từ CDN như trước, vì vậy phần trình bày
-Bootstrap cần kết nối mạng. Kiểm thử UI: `python manage.py test apps.dashboard.tests_ui`.
+màn hình nhỏ. Bootstrap 5.3.3 được lưu tại `backend/static/vendor/bootstrap/`
+kèm giấy phép MIT, dùng được offline. Kiểm thử UI: `python manage.py test apps.dashboard.tests_ui`.
 Chi tiết triển khai và xác minh: [UI_COMPLETION_REPORT.md](UI_COMPLETION_REPORT.md).
 
 ## Công nghệ sử dụng
@@ -136,18 +154,19 @@ Các thư mục `.venv/`, `__pycache__/`, `frontend/node_modules/`, `frontend/di
 
 ## Điều kiện cần
 
-- Normal teacher demo: Python 3.12+ và VS Code; bootstrap tự tạo virtual
-  environment và cài dependencies.
+- Giảng viên: Windows x64 và bộ `DEMO_PORTABLE` đầy đủ; trình duyệt mặc định.
+- Phát triển mã nguồn/build: Python 3.12+; bootstrap tạo virtual environment
+  và cài dependencies khi cần.
 - Optional frontend development: Node.js và npm chỉ khi cần chạy/build React/Vite
   scaffold.
 - Optional live AI: concrete provider adapter và environment configuration tương
   ứng; không bắt buộc cho dashboard/core demo.
 - PowerShell chỉ cần cho các ví dụ development thủ công bên dưới.
 
-One-click bootstrap tạo random `DJANGO_SECRET_KEY` chỉ trong process environment,
+Portable và source bootstrap tạo random `DJANGO_SECRET_KEY` chỉ trong process environment,
 không in hoặc ghi secret ra file. Django management/dashboard chạy khi
 `AI_PROVIDER` và `AI_API_KEY` rỗng; live generation vẫn cần concrete provider
-adapter/configuration. Khi thất bại, terminal giữ output gốc và hiển thị
+adapter/configuration. Source bootstrap khi thất bại hiển thị
 `PYTHON_MISSING`, `VENV_CREATE_FAILED`, `PIP_INSTALL_FAILED`, `MIGRATION_FAILED`,
 `SEED_FAILED`, `SERVER_START_FAILED` hoặc `PORT_UNAVAILABLE` cùng next action;
 bootstrap không dừng process khác đang chiếm port 8000.
@@ -170,6 +189,8 @@ python -m pip install -r requirements.txt
 | `DJANGO_SECRET_KEY` | Có, để khởi động Django | Không có | Secret của Django; phải tự đặt ngoài source. |
 | `DJANGO_DEBUG` | Không | `false` | Đặt `1` cho môi trường local/demo. |
 | `DJANGO_ALLOWED_HOSTS` | Không | `127.0.0.1,localhost` | Danh sách host cách nhau bằng dấu phẩy. |
+| `DJANGO_DEMO_DB_PATH` | Không | `backend/db.sqlite3` | Portable tự đặt đường dẫn `data/db.sqlite3` cạnh EXE. |
+| `DJANGO_PORTABLE_DEMO` | Không | `false` | Portable tự bật thẻ thông tin tài khoản demo trên trang đăng nhập. |
 | `AI_PROVIDER` | Không để khởi động; cần cho live AI | Rỗng | Tên provider adapter đã được đăng ký. |
 | `AI_API_KEY` | Không để khởi động; tùy provider live | Rỗng | Credential của provider, không lưu trong source. |
 

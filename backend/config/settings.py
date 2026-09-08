@@ -81,7 +81,7 @@ ASGI_APPLICATION = "config.asgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.getenv("DJANGO_DEMO_DB_PATH") or BASE_DIR / "db.sqlite3",
     }
 }
 
@@ -132,3 +132,5 @@ LOGGING = {
 LOGIN_URL = "/login/"
 LOGIN_REDIRECT_URL = "/auth/protected/"
 LOGOUT_REDIRECT_URL = "/login/"
+
+PORTABLE_DEMO = _env_bool("DJANGO_PORTABLE_DEMO")

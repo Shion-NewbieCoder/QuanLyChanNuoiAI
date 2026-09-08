@@ -4,6 +4,16 @@
 <main class="login-layout" id="main-content">
   <section class="login-intro"><p class="eyebrow">Quản lý chăn nuôi</p><h1>Mỗi ngày chăm sóc.<br>Một nông trại rõ ràng hơn.</h1><p>Theo dõi đàn, ghi nhận hoạt động và xem lại dữ liệu nông trại trong một không gian.</p><div class="login-features"><span>Đàn vật nuôi</span><span>Chăm sóc & vaccine</span><span>Thống kê & báo cáo</span></div></section>
   <section class="card login-card"><div class="card-body p-4 p-md-5"><p class="eyebrow">Nông trại AI</p><h2 class="h3 mb-2">Đăng nhập</h2><p class="text-secondary mb-4">Sử dụng tài khoản được cấp để tiếp tục.</p>
+  {% if portable_demo %}
+  <aside class="alert alert-info small" aria-label="Tài khoản demo">
+    <strong>Tài khoản demo phục vụ chấm bài/thực hành.</strong>
+    <p class="mb-2">Không sử dụng cho môi trường production.</p>
+    <div>Quản lý: <code>demo_manager</code></div>
+    <div>Kỹ thuật viên: <code>demo_technician</code></div>
+    <div>Nhân viên: <code>demo_employee</code></div>
+    <div class="mt-2">Mật khẩu chung: <code>DemoOnly-2026!</code></div>
+  </aside>
+  {% endif %}
   <form method="post">{% csrf_token %}
     {% if form.errors %}<div class="alert alert-danger" role="alert">Tên đăng nhập hoặc mật khẩu chưa đúng. Vui lòng kiểm tra lại.</div>{% endif %}
     <div class="mb-3"><label class="form-label" for="id_username">Tên đăng nhập</label><input class="form-control" type="text" name="username" id="id_username" autocomplete="username" value="{{ form.username.value|default_if_none:'' }}" maxlength="150" required autofocus></div>

@@ -1,5 +1,6 @@
 """URL configuration for authentication and the protected test surface."""
 
+from django.conf import settings
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import include, path
 
@@ -12,7 +13,10 @@ urlpatterns = [
     path("api/ai/", include("apps.ai.urls")),
     path(
         "login/",
-        LoginView.as_view(template_name="registration/login.html"),
+        LoginView.as_view(
+            template_name="registration/login.html",
+            extra_context={"portable_demo": settings.PORTABLE_DEMO},
+        ),
         name="login",
     ),
     path("logout/", LogoutView.as_view(), name="logout"),
