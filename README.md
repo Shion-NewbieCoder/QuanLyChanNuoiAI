@@ -2,6 +2,43 @@
 
 Đây là dự án học thuật chạy cục bộ để quản lý dữ liệu chăn nuôi, thống kê từ dữ liệu nguồn và trình bày các báo cáo AI có kiểm soát. Django Dashboard là giao diện chức năng chính; thư mục React/Vite hiện là scaffold và ranh giới tích hợp frontend, không phải một giao diện CRUD nghiệp vụ hoàn chỉnh.
 
+## Chạy nhanh trên Windows / VS Code
+
+### Cách chính
+
+1. Cài Python 3.9 trở lên và VS Code hiện hành (VS Code 1.112+ để
+   tự động mở Integrated Browser).
+2. Mở **thư mục gốc project** trong VS Code.
+3. Nhấn **F5** hoặc chọn **Run and Debug**.
+4. Chọn `Run Livestock Management Demo` nếu VS Code hiển thị danh sách.
+5. Chờ bootstrap tự tạo `.venv`, cài backend requirements khi cần, migrate,
+   seed và khởi động Django. Dashboard sẽ mở trong Integrated Browser tại
+   `http://127.0.0.1:8000/dashboard/`.
+
+Tài khoản demo:
+
+```text
+Username: demo_manager
+Password: DemoOnly-2026!
+```
+
+Lần chạy đầu cần kết nối mạng nếu máy chưa có các package trong pip
+cache. Không cần activate virtual environment, nhập Django secret, chạy lệnh
+Django hoặc Node/npm thủ công. Nhấn **Ctrl+C** trong terminal demo để dừng server.
+
+### Xem ngay trong VS Code
+
+Run configuration dùng `editor-browser` chính thức của VS Code để tự mở
+dashboard bên trong editor sau khi server sẵn sàng; không cần browser extension
+hoặc Chrome/Edge. Nếu dùng VS Code cũ chưa hỗ trợ configuration này, hãy
+cập nhật VS Code; hoặc sau khi chạy `RUN_DEMO.bat`, nhấn **Ctrl+Shift+P**,
+chọn **Simple Browser: Show** và dán URL dashboard.
+
+### Cách dự phòng
+
+Double-click `RUN_DEMO.bat` tại project root. Batch launcher và F5 đều gọi
+cùng `tools/run_demo.py`; không có hai quy trình setup khác nhau.
+
 ## Chức năng đã triển khai
 
 - Đăng nhập bằng Django session và phân quyền theo vai trò.
@@ -26,6 +63,9 @@
 
 ```text
 QuanLyChanNuoiGiaSucAI/
+├── RUN_DEMO.bat
+├── tools/run_demo.py
+├── .vscode/launch.json, tasks.json
 ├── 01_requirements_chan_nuoi_ai.md
 ├── 02_design_chan_nuoi_ai.md
 ├── 03_implementation_plan_chan_nuoi_ai_reviewed.md
@@ -55,9 +95,21 @@ Các thư mục `.venv/`, `__pycache__/`, `frontend/node_modules/`, `frontend/di
 
 ## Điều kiện cần
 
-- Python và `pip`.
-- Node.js và npm nếu cần chạy hoặc build React/Vite scaffold.
-- PowerShell cho các ví dụ lệnh dưới đây trên Windows.
+- Normal teacher demo: Python 3.9+ và VS Code; bootstrap tự tạo virtual
+  environment và cài dependencies.
+- Optional frontend development: Node.js và npm chỉ khi cần chạy/build React/Vite
+  scaffold.
+- Optional live AI: concrete provider adapter và environment configuration tương
+  ứng; không bắt buộc cho dashboard/core demo.
+- PowerShell chỉ cần cho các ví dụ development thủ công bên dưới.
+
+One-click bootstrap tạo random `DJANGO_SECRET_KEY` chỉ trong process environment,
+không in hoặc ghi secret ra file. Django management/dashboard chạy khi
+`AI_PROVIDER` và `AI_API_KEY` rỗng; live generation vẫn cần concrete provider
+adapter/configuration. Khi thất bại, terminal giữ output gốc và hiển thị
+`PYTHON_MISSING`, `VENV_CREATE_FAILED`, `PIP_INSTALL_FAILED`, `MIGRATION_FAILED`,
+`SEED_FAILED`, `SERVER_START_FAILED` hoặc `PORT_UNAVAILABLE` cùng next action;
+bootstrap không dừng process khác đang chiếm port 8000.
 
 ## Cài đặt backend
 
