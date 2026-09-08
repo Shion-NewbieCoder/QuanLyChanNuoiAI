@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import models
 from rest_framework.exceptions import ValidationError as ApiValidationError
 
+from apps.herds.appearance import AVATAR_CHOICES
+
 from .resources import LABELS
 
 
@@ -52,12 +54,20 @@ class ResourceForm(forms.Form):
             elif model_field.has_default():
                 self.initial[name] = model_field.get_default()
         style_form(self)
+        if resource.slug in ("herds", "animals", "animal-groups"):
+            self.fields["avatar"] = forms.ChoiceField(
+                label="Hình đại diện", choices=AVATAR_CHOICES, required=False,
+                widget=AvatarPicker,
+                help_text="Chọn hình minh họa cho bản ghi này, hoặc để hệ thống chọn theo loại vật nuôi.",
+            )
+            self.initial["avatar"] = instance.avatar if instance is not None else ""
 
     def clean(self):
         cleaned = super().clean()
         if self.errors:
             return cleaned
-        payload = {name: value.pk if isinstance(value, models.Model) else value for name, value in cleaned.items()}
+        payload = {name: value.pk if isinstance(value, models.Model) else value
+                   for name, value in cleaned.items() if name in self.resource.fields}
         self.validated_serializer = self.resource.viewset.serializer_class(instance=self.instance, data=payload)
         try:
             self.validated_serializer.is_valid(raise_exception=True)
@@ -68,7 +78,15 @@ class ResourceForm(forms.Form):
         return cleaned
 
     def save(self):
-        return self.validated_serializer.save()
+        instance = self.validated_serializer.save()
+        if "avatar" in self.fields and self.add_prefix("avatar") in self.data:
+            instance.avatar = self.cleaned_data["avatar"]
+            instance.save(update_fields=["avatar"])
+        return instance
+
+
+class AvatarPicker(forms.RadioSelect):
+    template_name = "dashboard/widgets/avatar_picker.html"
 
 
 class AIFeatureForm(forms.Form):

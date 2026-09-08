@@ -1,5 +1,6 @@
-"""Decorative illustrations only; no additional animal or pen data is stored."""
+"""Choose a bundled illustration from a saved preference or the animal type."""
 from django import template
+from apps.herds.appearance import AVATAR_NAMES
 
 register = template.Library()
 ICONS = {"dashboard", "herds", "animals", "animal-groups", "pens", "care", "feed",
@@ -16,6 +17,8 @@ def farm_icon(name):
 def farm_avatar(obj=None, section="herds"):
     if section == "pens":
         name = "barn"
+    elif getattr(obj, "avatar", "") in AVATAR_NAMES:
+        name = obj.avatar
     elif obj is None:
         name = "herd" if section in ("herds", "animal-groups") else "animal"
     else:

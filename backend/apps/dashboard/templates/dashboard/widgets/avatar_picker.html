@@ -1,0 +1,14 @@
+{% load static %}
+<div class="avatar-picker" role="group" aria-label="Chọn hình đại diện">
+  {% for group, options, index in widget.optgroups %}{% for option in options %}
+  <label class="avatar-option" for="{{ option.attrs.id }}">
+    {% include "django/forms/widgets/input.html" with widget=option %}
+    <span class="avatar-option-card">
+      {% if option.value %}<img src="{% static 'images/farm/' %}{{ option.value }}.svg" alt="" width="72" height="72" loading="lazy">
+      {% else %}<span class="avatar-auto-symbol" aria-hidden="true">↻</span>{% endif %}
+      <span class="avatar-option-label">{{ option.label }}</span>
+      <span class="avatar-check" aria-hidden="true">✓</span>
+    </span>
+  </label>
+  {% endfor %}{% endfor %}
+</div>

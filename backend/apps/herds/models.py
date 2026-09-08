@@ -1,8 +1,11 @@
 from django.core.validators import MinValueValidator
 from django.db import models
 
+from .appearance import AVATAR_CHOICES
+
 
 class Herd(models.Model):
+    avatar = models.CharField(max_length=20, choices=AVATAR_CHOICES, blank=True, default="")
     code = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     animal_type = models.CharField(max_length=100)
@@ -18,6 +21,7 @@ class Herd(models.Model):
 
 
 class Animal(models.Model):
+    avatar = models.CharField(max_length=20, choices=AVATAR_CHOICES, blank=True, default="")
     code = models.CharField(max_length=100)
     herd = models.ForeignKey(
         Herd,
@@ -34,6 +38,7 @@ class Animal(models.Model):
 
 
 class AnimalGroup(models.Model):
+    avatar = models.CharField(max_length=20, choices=AVATAR_CHOICES, blank=True, default="")
     code = models.CharField(max_length=100)
     name = models.CharField(max_length=200)
     herd = models.ForeignKey(
