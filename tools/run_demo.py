@@ -57,10 +57,10 @@ def port_is_in_use():
 
 
 def ensure_supported_python():
-    if sys.version_info.major != 3 or sys.version_info < (3, 9):
+    if sys.version_info.major != 3 or sys.version_info < (3, 12):
         return fail(
             "PYTHON_UNSUPPORTED",
-            "Python 3.9 or newer is required.",
+            "Python 3.12 or newer is required.",
             "Install a supported Python 3 release and run the demo again.",
         )
     return 0

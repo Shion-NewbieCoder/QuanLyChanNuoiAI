@@ -6,7 +6,7 @@
 
 ### Cách chính
 
-1. Cài Python 3.9 trở lên và VS Code hiện hành (VS Code 1.112+ để
+1. Cài Python 3.12 trở lên và VS Code hiện hành (VS Code 1.112+ để
    tự động mở Integrated Browser).
 2. Mở **thư mục gốc project** trong VS Code.
 3. Nhấn **F5** hoặc chọn **Run and Debug**.
@@ -53,7 +53,7 @@ cùng `tools/run_demo.py`; không có hai quy trình setup khác nhau.
 
 ## Công nghệ
 
-- Backend: Python, Django, Django REST Framework.
+- Backend: Python 3.12+, Django 6.1.1, Django REST Framework 3.18.1.
 - Cơ sở dữ liệu: SQLite.
 - Dashboard: Django Templates, Bootstrap 5.
 - Frontend scaffold: React, Vite.
@@ -95,7 +95,7 @@ Các thư mục `.venv/`, `__pycache__/`, `frontend/node_modules/`, `frontend/di
 
 ## Điều kiện cần
 
-- Normal teacher demo: Python 3.9+ và VS Code; bootstrap tự tạo virtual
+- Normal teacher demo: Python 3.12+ và VS Code; bootstrap tự tạo virtual
   environment và cài dependencies.
 - Optional frontend development: Node.js và npm chỉ khi cần chạy/build React/Vite
   scaffold.

@@ -10,14 +10,16 @@ if not exist "%BOOTSTRAP%" (
     goto :fatal
 )
 
-py -3 -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+rem Detect a Python 3 launcher first; tools\run_demo.py performs the exact
+rem supported-version check so unsupported Python reports PYTHON_UNSUPPORTED.
+py -3 -c "import sys; raise SystemExit(0 if sys.version_info.major == 3 else 1)" >nul 2>&1
 if not errorlevel 1 goto :run_with_py
 
-python -c "import sys; raise SystemExit(0 if sys.version_info >= (3, 9) else 1)" >nul 2>&1
+python -c "import sys; raise SystemExit(0 if sys.version_info.major == 3 else 1)" >nul 2>&1
 if not errorlevel 1 goto :run_with_python
 
 echo [PYTHON_MISSING] Python 3 was not found.
-echo Install Python 3 and make it available through the Windows Python launcher
+echo Install Python 3.12 or newer and make it available through the Windows Python launcher
 echo or PATH, then run the project again.
 goto :fatal
 
