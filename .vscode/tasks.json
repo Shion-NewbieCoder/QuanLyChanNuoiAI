@@ -16,11 +16,12 @@
       "isBackground": true,
       "problemMatcher": {
         "owner": "livestock-demo",
-        "pattern": [
-          {
-            "regexp": "^(?!)$"
-          }
-        ],
+        "pattern": {
+          "regexp": "^(?!)((.*))$",
+          "kind": "file",
+          "file": 1,
+          "message": 2
+        },
         "background": {
           "activeOnStart": true,
           "beginsPattern": "^\\[DEMO_BOOTSTRAP\\]",
