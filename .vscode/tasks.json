@@ -25,7 +25,7 @@
         "background": {
           "activeOnStart": true,
           "beginsPattern": "^\\[DEMO_BOOTSTRAP\\]",
-          "endsPattern": "^\\[DEMO_READY\\]"
+          "endsPattern": "^\\[DEMO_READY\\]$"
         }
       },
       "presentation": {

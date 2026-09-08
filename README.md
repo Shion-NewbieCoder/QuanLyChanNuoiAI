@@ -26,6 +26,13 @@ Lần chạy đầu cần kết nối mạng nếu máy chưa có các package t
 cache. Không cần activate virtual environment, nhập Django secret, chạy lệnh
 Django hoặc Node/npm thủ công. Nhấn **Ctrl+C** trong terminal demo để dừng server.
 
+Launcher demo chạy Django với `--noreload` và chờ HTTP GET `/login/` trả về
+2xx/3xx (tối đa 20 giây) trước khi in đúng một dòng `[DEMO_READY]` để F5 mở
+Integrated Browser. Mở port TCP chưa được coi là sẵn sàng. Bootstrap tiếp tục
+chạy cùng server sau marker; khi sửa code Python, dừng bằng **Ctrl+C** rồi chạy
+lại F5. Nếu gặp `PORT_UNAVAILABLE`, dừng Django cũ trong terminal của nó trước
+khi chạy lại; launcher không tự dừng tiến trình khác.
+
 ### Xem ngay trong VS Code
 
 Run configuration dùng `editor-browser` chính thức của VS Code để tự mở

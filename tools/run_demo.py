@@ -3,6 +3,7 @@
 
 import argparse
 import hashlib
+import http.client
 import os
 from pathlib import Path
 import secrets
@@ -21,6 +22,7 @@ DEPENDENCY_MARKER = VENV_DIR / ".requirements.sha256"
 HOST = "127.0.0.1"
 PORT = 8000
 DASHBOARD_URL = f"http://{HOST}:{PORT}/dashboard/"
+READINESS_PATH = "/login/"
 
 
 def message(text=""):
@@ -196,17 +198,56 @@ def wait_for_server(process, timeout_seconds=20):
     while time.monotonic() < deadline:
         if process.poll() is not None:
             return False
-        if port_is_in_use():
-            return True
-        time.sleep(0.2)
+        # A listening socket alone does not mean Django can serve a page.
+        # Connect directly to loopback, independent of system HTTP proxies.
+        connection = http.client.HTTPConnection(
+            HOST, PORT, timeout=min(1.0, max(0.01, deadline - time.monotonic()))
+        )
+        try:
+            connection.request("GET", READINESS_PATH)
+            response = connection.getresponse()
+            response.read()
+            if 200 <= response.status < 400 and process.poll() is None:
+                return True
+        except (OSError, http.client.HTTPException):
+            pass
+        finally:
+            connection.close()
+        time.sleep(min(0.25, max(0, deadline - time.monotonic())))
     return False
 
 
+def stop_server(process):
+    if process.poll() is None:
+        if os.name == "nt":
+            # Windows venv python.exe may be a redirector with a Python child.
+            # Stop only our own process tree, never a process found by port.
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
+            )
+        else:
+            process.terminate()
+        try:
+            process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait()
+
+
 def run_server(environment):
+    if port_is_in_use():
+        return fail(
+            "PORT_UNAVAILABLE",
+            "Port 8000 is already in use; no process was stopped.",
+            "Stop the previous Django process with Ctrl+C, then press F5 again.",
+        )
     message("[DEMO] Starting Django server...")
     try:
         process = subprocess.Popen(
-            [str(VENV_PYTHON), "manage.py", "runserver", f"{HOST}:{PORT}"],
+            [str(VENV_PYTHON), "manage.py", "runserver", f"{HOST}:{PORT}", "--noreload"],
             cwd=str(BACKEND_DIR),
             env=environment,
         )
@@ -217,16 +258,32 @@ def run_server(environment):
             "Review the error and run the demo again.",
         )
 
-    if not wait_for_server(process):
-        if process.poll() is None:
-            process.terminate()
+    try:
+        if not wait_for_server(process):
+            return fail(
+                "SERVER_START_FAILED",
+                "Django did not serve a successful HTTP response from /login/ within 20 seconds.",
+                "Review the server output above and ensure port 8000 is available.",
+            )
+        message("[DEMO_READY]")
+        print_demo_details()
+        return_code = process.wait()
+    except KeyboardInterrupt:
+        message("\n[DEMO] Server stopped.")
+        return 0
+    finally:
+        stop_server(process)
+
+    if return_code != 0:
         return fail(
             "SERVER_START_FAILED",
-            "Django did not become ready on port 8000 within 20 seconds.",
-            "Review the server output above and ensure port 8000 is available.",
+            f"Django server exited with code {return_code}.",
+            "Review the server output above and run the demo again.",
         )
+    return 0
 
-    message(f"[DEMO_READY] {DASHBOARD_URL}")
+
+def print_demo_details():
     message("============================================================")
     message(" LIVESTOCK MANAGEMENT AI - LOCAL DEMO")
     message("============================================================")
@@ -236,20 +293,6 @@ def run_server(environment):
     message("Password: DemoOnly-2026!")
     message("Press Ctrl+C to stop the server.")
     message("============================================================")
-
-    try:
-        return_code = process.wait()
-    except KeyboardInterrupt:
-        message("\n[DEMO] Server stopped.")
-        return 0
-
-    if return_code != 0:
-        return fail(
-            "SERVER_START_FAILED",
-            f"Django server exited with code {return_code}.",
-            "Review the server output above and run the demo again.",
-        )
-    return 0
 
 
 def parse_arguments():
