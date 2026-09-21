@@ -20,7 +20,12 @@ from .providers import (
     AIResponse,
     get_configured_provider,
 )
-from .safety import PROMPT_BOUNDARY, SAFETY_NOTICE, apply_prompt_boundary
+from .safety import SAFETY_NOTICE
+from .prompts.common import SYSTEM_PROMPT
+from .prompts.herd_summary import build_herd_summary_prompt
+
+
+TEST_PROMPT = build_herd_summary_prompt()
 
 
 class FakeProvider:
@@ -80,11 +85,14 @@ class AIOrchestratorTests(TestCase):
         raw_response = AIResponse(text="  fake result  ", provider="  fake  ")
         provider = StaticResponseProvider(raw_response)
         response = AIOrchestrator(provider).run(
-            self.users[ROLE_MANAGEMENT], "generic prompt", {"approved": "input"}
+            self.users[ROLE_MANAGEMENT], TEST_PROMPT, {"approved": "input"}
         )
         self.assertEqual(response, AIResponse(text="fake result", provider="fake"))
         self.assertIsNot(response, raw_response)
-        self.assertEqual(provider.requests, [AIRequest("generic prompt", {"approved": "input"})])
+        self.assertEqual(provider.requests, [AIRequest(
+            TEST_PROMPT.system_prompt, TEST_PROMPT.user_prompt, {"approved": "input"},
+            TEST_PROMPT.version, TEST_PROMPT.output_constraints,
+        )])
 
     def test_malformed_provider_outputs_are_rejected_safely(self):
         malformed = (
@@ -101,14 +109,14 @@ class AIOrchestratorTests(TestCase):
                 provider = StaticResponseProvider(raw_response, "secret-token")
                 with self.assertRaisesRegex(AIInvocationError, "invalid response") as raised:
                     AIOrchestrator(provider).run(
-                        self.users[ROLE_MANAGEMENT], "prompt", {"approved": "facts"}
+                        self.users[ROLE_MANAGEMENT], TEST_PROMPT, {"approved": "facts"}
                     )
                 self.assertNotIn("secret-token", str(raised.exception))
                 self.assertNotIn(repr(raw_response), str(raised.exception))
 
     def test_shared_prompt_boundary_contains_documented_safety_constraints(self):
-        prompt = apply_prompt_boundary("FEATURE FACTS")
-        self.assertTrue(prompt.startswith(PROMPT_BOUNDARY))
+        prompt = TEST_PROMPT.system_prompt
+        self.assertEqual(prompt, SYSTEM_PROMPT)
         for constraint in (
             "reference information only",
             "do not diagnose",
@@ -121,7 +129,7 @@ class AIOrchestratorTests(TestCase):
         provider = FakeProvider()
         initial_herds = Herd.objects.count()
         context = {"herd_code": "H-001"}
-        AIOrchestrator(provider).run(self.users[ROLE_TECHNICIAN], "generic prompt", context)
+        AIOrchestrator(provider).run(self.users[ROLE_TECHNICIAN], TEST_PROMPT, context)
         self.assertEqual(provider.requests[0].context, context)
         self.assertNotIn("password", provider.requests[0].context)
         self.assertEqual(Herd.objects.count(), initial_herds)
@@ -131,24 +139,24 @@ class AIOrchestratorTests(TestCase):
         provider = FailingProvider(secret)
         with self.assertLogs("apps.ai.orchestrator", level="WARNING") as logs:
             with self.assertRaisesRegex(AIInvocationError, "unavailable") as raised:
-                AIOrchestrator(provider).run(self.users[ROLE_MANAGEMENT], "prompt", {"key": "value"})
+                AIOrchestrator(provider).run(self.users[ROLE_MANAGEMENT], TEST_PROMPT, {"key": "value"})
         self.assertNotIn(secret, str(raised.exception))
         self.assertNotIn(secret, "\n".join(logs.output))
 
     def test_ai_access_reuses_approved_role_policy_and_precedence(self):
         provider = FakeProvider()
         orchestrator = AIOrchestrator(provider)
-        self.assertEqual(orchestrator.run(self.users[ROLE_MANAGEMENT], "p", {}).text, "fake result")
-        self.assertEqual(orchestrator.run(self.users[ROLE_TECHNICIAN], "p", {}).text, "fake result")
+        self.assertEqual(orchestrator.run(self.users[ROLE_MANAGEMENT], TEST_PROMPT, {}).text, "fake result")
+        self.assertEqual(orchestrator.run(self.users[ROLE_TECHNICIAN], TEST_PROMPT, {}).text, "fake result")
         for user in (self.users[ROLE_EMPLOYEE], self.no_role):
             with self.subTest(user=user.username):
                 with self.assertRaises(AIAccessDenied):
-                    orchestrator.run(user, "p", {})
+                    orchestrator.run(user, TEST_PROMPT, {})
         multi_role = get_user_model().objects.create_user(username="ai-manager-employee")
         multi_role.groups.add(
             Group.objects.get(name=ROLE_MANAGEMENT), Group.objects.get(name=ROLE_EMPLOYEE)
         )
-        self.assertEqual(orchestrator.run(multi_role, "p", {}).text, "fake result")
+        self.assertEqual(orchestrator.run(multi_role, TEST_PROMPT, {}).text, "fake result")
 
 
 class ReminderApiTests(TestCase):
@@ -331,7 +339,8 @@ class GrowthReportApiTests(TestCase):
         self.assertNotIn("99.00", str(context))
         for forbidden in ("password", "groups", "care_logs", "sales", "statistics", "api_key"):
             self.assertNotIn(forbidden, str(context).lower())
-        prompt = provider.requests[-1].prompt.lower()
+        request = provider.requests[-1]
+        prompt = " ".join((request.system_prompt, request.user_prompt, *request.output_constraints)).lower()
         self.assertIn("do not invent", prompt)
         self.assertIn("forecast", prompt)
         self.assertIn("diagnose", prompt)
@@ -464,7 +473,7 @@ class AIOutputSafetyApiTests(TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(response.json()["result"]["text"], expected_text)
                 self.assertIn(SAFETY_NOTICE, response.json()["notice"])
-                self.assertTrue(providers[route].requests[-1].prompt.startswith(PROMPT_BOUNDARY))
+                self.assertEqual(providers[route].requests[-1].system_prompt, SYSTEM_PROMPT)
 
     @patch("apps.ai.herd_summary.get_configured_provider")
     def test_malformed_output_uses_safe_error_envelope(self, factory):

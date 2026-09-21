@@ -1,12 +1,11 @@
-import json
-
 from apps.care.models import CareLog, FeedRecord, MedicineRecord
 from apps.herds.models import Herd
 from apps.vaccinations.models import VaccinationRecord, VaccineSchedule
 
 from .orchestrator import AIOrchestrator
 from .providers import get_configured_provider
-from .safety import apply_prompt_boundary, with_safety_notice
+from .safety import with_safety_notice
+from .prompts.herd_summary import build_herd_summary_prompt
 
 
 NOTICE = with_safety_notice("AI-generated summary based on recorded herd data.")
@@ -27,17 +26,8 @@ def build_herd_summary_facts(herd):
     return facts, source_count
 
 
-def build_herd_summary_prompt(facts):
-    return apply_prompt_boundary(
-        "Summarize only SOURCE_FACTS. Do not invent facts/events; preserve dates, numbers and statuses. "
-        "State related records are unavailable when lists are empty. No diagnosis or treatment "
-        "recommendations. SOURCE_FACTS: "
-        + json.dumps(facts, ensure_ascii=False, default=str)
-    )
-
-
 def generate_herd_summary(user, herd_id):
     herd = Herd.objects.get(pk=herd_id)
     facts, source_count = build_herd_summary_facts(herd)
-    response = AIOrchestrator(get_configured_provider()).run(user, build_herd_summary_prompt(facts), {"herd_summary": facts})
+    response = AIOrchestrator(get_configured_provider()).run(user, build_herd_summary_prompt(), {"herd_summary": facts})
     return {"text": response.text, "source_count": source_count}

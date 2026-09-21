@@ -22,10 +22,19 @@ from .openai_provider import OpenAIProvider, normalize_request
 from .orchestrator import AIInvocationError, AIOrchestrator
 from .providers import AIConfigurationError, AIErrorCategory, AIProviderError, AIRequest, AIResponse, get_configured_provider
 from .safety import validate_and_normalize_output
+from .prompts.common import PromptSpec
 
 
 FAKE_KEY = "fake-openai-key-for-tests-only"
 PRIVATE_BODY = "fake-private-provider-payload"
+
+
+def request_for_test(system_prompt, context):
+    return AIRequest(system_prompt, "Explain supplied facts.", context, "test-v1", ("Text only.",))
+
+
+def spec_for_test(system_prompt):
+    return PromptSpec("test-v1", system_prompt, "Explain supplied facts.", ("Text only.",))
 
 
 def configuration(**overrides):
@@ -145,7 +154,7 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
         super().setUp()
         self.client_mock = fake_client()
         self.provider = OpenAIProvider(configuration(), client=self.client_mock)
-        self.request = AIRequest("Preserve supplied facts and metrics.", {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": Decimal("12.50")}})
+        self.request = request_for_test("Preserve supplied facts and metrics.", {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": Decimal("12.50")}})
 
     def test_injected_client_factory_receives_configuration(self):
         factory = Mock(return_value=self.client_mock)
@@ -160,14 +169,17 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
         self.assertEqual(sent["model"], "configured-test-model")
         self.assertIs(sent["store"], False)
         self.assertEqual(sent["truncation"], "disabled")
-        self.assertEqual(sent["instructions"], self.request.prompt)
-        self.assertEqual(json.loads(sent["input"]), {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": "12.50"}})
+        self.assertEqual(sent["instructions"], self.request.system_prompt + "\n\nOutput constraints:\nText only.")
+        self.assertEqual(json.loads(sent["input"]), {
+            "user_prompt": self.request.user_prompt, "prompt_version": "test-v1",
+            "context": {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": "12.50"}},
+        })
         self.assertEqual(response, AIResponse("  factual report  ", "openai"))
         self.assertNotIn(FAKE_KEY, str(sent))
 
     def test_normalization_is_stable_utf8_and_only_sent_content(self):
-        first = AIRequest("facts", {"z": "Đàn", "a": Decimal("1.20")})
-        second = AIRequest("facts", {"a": Decimal("1.20"), "z": "Đàn"})
+        first = request_for_test("facts", {"z": "Đàn", "a": Decimal("1.20")})
+        second = request_for_test("facts", {"a": Decimal("1.20"), "z": "Đàn"})
         content, encoded = normalize_request(first)
         self.assertEqual(encoded, normalize_request(second)[1])
         self.assertEqual(encoded, json.dumps(content, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8"))
@@ -177,16 +189,16 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
         self.assertEqual(content, {key: sent[key] for key in ("instructions", "input")})
 
     def test_exact_65536_byte_payload_is_allowed_without_truncation(self):
-        base = AIRequest("", {"notes": "Đàn bò"})
+        base = request_for_test("", {"notes": "Đàn bò"})
         padding = 65536 - len(normalize_request(base)[1])
-        request = AIRequest("x" * padding, base.context)
+        request = replace(base, system_prompt="x" * padding)
         self.assertEqual(len(normalize_request(request)[1]), 65536)
         self.provider.generate(request)
-        self.assertEqual(self.client_mock.responses.create.call_args.kwargs["instructions"], request.prompt)
+        self.assertEqual(self.client_mock.responses.create.call_args.kwargs["instructions"], request.system_prompt + "\n\nOutput constraints:\nText only.")
 
     def test_payload_one_byte_over_limit_never_calls_provider(self):
-        base = AIRequest("", {})
-        request = AIRequest("x" * (65537 - len(normalize_request(base)[1])), {})
+        base = request_for_test("", {})
+        request = replace(base, system_prompt="x" * (65537 - len(normalize_request(base)[1])))
         self.assertEqual(len(normalize_request(request)[1]), 65537)
         with self.assertRaises(AIProviderError) as raised:
             self.provider.generate(request)
@@ -202,9 +214,9 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
 
     def test_all_records_reach_provider_and_input_is_not_mutated(self):
         records = [{"measurement_date": "2026-01-01", "weight": Decimal("1.25"), "notes": str(i)} for i in range(40)]
-        request = AIRequest("Preserve all metrics", {"growth_records": records})
+        request = request_for_test("Preserve all metrics", {"growth_records": records})
         self.provider.generate(request)
-        sent = json.loads(self.client_mock.responses.create.call_args.kwargs["input"])
+        sent = json.loads(self.client_mock.responses.create.call_args.kwargs["input"])["context"]
         self.assertEqual(len(sent["growth_records"]), 40)
         self.assertEqual([row["notes"] for row in sent["growth_records"]], [str(i) for i in range(40)])
         self.assertIsInstance(records[0]["weight"], Decimal)
@@ -212,7 +224,7 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
     def test_unserializable_or_nonfinite_data_fails_without_provider_call(self):
         for context in ({"v": object()}, {"v": float("nan")}, {"v": Decimal("Infinity")}):
             with self.subTest(context_type=type(context["v"])), self.assertRaises(AIProviderError) as raised:
-                self.provider.generate(AIRequest("facts", context))
+                self.provider.generate(request_for_test("facts", context))
             self.assertEqual(raised.exception.category, AIErrorCategory.INVALID_REQUEST)
         self.client_mock.responses.create.assert_not_called()
 
@@ -258,7 +270,7 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
         with patch("apps.ai.orchestrator.get_user_role", return_value=ROLE_MANAGEMENT):
             with self.assertLogs("apps.ai.orchestrator", level="WARNING") as logs:
                 with self.assertRaises(AIInvocationError) as raised:
-                    AIOrchestrator(self.provider).run(object(), PRIVATE_BODY, {"notes": FAKE_KEY})
+                    AIOrchestrator(self.provider).run(object(), spec_for_test(PRIVATE_BODY), {"notes": FAKE_KEY})
         self.assertEqual(raised.exception.category, AIErrorCategory.TIMEOUT)
         for private in (FAKE_KEY, PRIVATE_BODY):
             self.assertNotIn(private, str(raised.exception))
@@ -267,7 +279,7 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
     def test_shared_output_validator_still_runs(self):
         with patch("apps.ai.orchestrator.get_user_role", return_value=ROLE_MANAGEMENT):
             with patch("apps.ai.orchestrator.validate_and_normalize_output", wraps=validate_and_normalize_output) as validator:
-                result = AIOrchestrator(self.provider).run(object(), self.request.prompt, self.request.context)
+                result = AIOrchestrator(self.provider).run(object(), spec_for_test(self.request.system_prompt), self.request.context)
         validator.assert_called_once()
         self.assertEqual(result, AIResponse("factual report", "openai"))
 
@@ -287,8 +299,8 @@ class OpenAIProviderTests(NoNetworkMixin, SimpleTestCase):
         self.assertEqual(result, AIResponse("mock SDK output", "openai"))
         self.assertEqual(len(captured), 1)
         self.assertIs(captured[0]["store"], False)
-        self.assertEqual(captured[0]["instructions"], self.request.prompt)
-        self.assertEqual(json.loads(captured[0]["input"])["metrics"]["average_weight"], "12.50")
+        self.assertEqual(captured[0]["instructions"], self.request.system_prompt + "\n\nOutput constraints:\nText only.")
+        self.assertEqual(json.loads(captured[0]["input"])["context"]["metrics"]["average_weight"], "12.50")
         self.network_guard.assert_not_called()
 
     def test_official_sdk_does_not_retry_with_approved_policy(self):

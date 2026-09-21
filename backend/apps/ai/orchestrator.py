@@ -3,6 +3,7 @@ import logging
 from apps.users.roles import ROLE_MANAGEMENT, ROLE_TECHNICIAN, get_user_role
 
 from .providers import AIErrorCategory, AIProviderError, AIProviderInterface, AIRequest, AIResponse
+from .prompts import PromptSpec
 from .safety import AIOutputValidationError, validate_and_normalize_output
 
 
@@ -28,11 +29,17 @@ class AIOrchestrator:
     def __init__(self, provider: AIProviderInterface):
         self.provider = provider
 
-    def run(self, user, prompt: str, context: dict[str, object]) -> AIResponse:
+    def run(self, user, prompt: PromptSpec, context: dict[str, object]) -> AIResponse:
         if get_user_role(user) not in AI_ALLOWED_ROLES:
             raise AIAccessDenied("AI access is not permitted.")
 
-        request = AIRequest(prompt=prompt, context=dict(context))
+        request = AIRequest(
+            system_prompt=prompt.system_prompt,
+            user_prompt=prompt.user_prompt,
+            context=dict(context),
+            prompt_version=prompt.version,
+            output_constraints=prompt.output_constraints,
+        )
         try:
             response = self.provider.generate(request)
         except AIProviderError as exc:

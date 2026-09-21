@@ -1,11 +1,10 @@
-import json
-
 from apps.vaccinations.models import VaccineSchedule
 from apps.vaccinations.serializers import get_alert_classification
 
 from .orchestrator import AIOrchestrator
 from .providers import get_configured_provider
-from .safety import SAFETY_NOTICE, apply_prompt_boundary, with_safety_notice
+from .safety import SAFETY_NOTICE, with_safety_notice
+from .prompts.reminders import build_reminder_prompt
 
 
 AI_NOTICE = SAFETY_NOTICE
@@ -34,19 +33,10 @@ def select_reminder_sources(scope, target_id=None, start_date=None, end_date=Non
     ]
 
 
-def build_reminder_prompt(sources):
-    facts = json.dumps(sources, ensure_ascii=False, separators=(",", ":"))
-    return apply_prompt_boundary(
-        "Provide concise reminder presentation text only from SOURCE_FACTS. "
-        "Do not invent facts or change dates, statuses, or classifications. "
-        "Do not diagnose. SOURCE_FACTS: " + facts
-    )
-
-
 def generate_reminders(user, scope, target_id=None, start_date=None, end_date=None):
     sources = select_reminder_sources(scope, target_id, start_date, end_date)
     if not sources:
         return {"text": "", "source_count": 0, "notice": NO_DATA_NOTICE}
     orchestrator = AIOrchestrator(get_configured_provider())
-    response = orchestrator.run(user, build_reminder_prompt(sources), {"vaccine_schedules": sources})
+    response = orchestrator.run(user, build_reminder_prompt(), {"vaccine_schedules": sources})
     return {"text": response.text, "source_count": len(sources), "notice": AI_NOTICE}

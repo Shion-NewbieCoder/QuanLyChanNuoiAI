@@ -34,11 +34,26 @@ def _serialize(value):
 
 
 def normalize_request(request: AIRequest):
-    """Map the existing combined prompt and separate context, without rewriting."""
+    """Serialize exactly the provider-bound content measured by the UTF-8 guard."""
     try:
-        if not isinstance(request.prompt, str) or not isinstance(request.context, dict):
+        if (
+            not all(isinstance(value, str) for value in (
+                request.system_prompt, request.user_prompt, request.prompt_version
+            ))
+            or not isinstance(request.context, dict)
+            or not isinstance(request.output_constraints, tuple)
+            or not all(isinstance(value, str) for value in request.output_constraints)
+        ):
             raise TypeError
-        content = {"instructions": request.prompt, "input": _serialize(request.context)}
+        content = {
+            "instructions": request.system_prompt + "\n\nOutput constraints:\n"
+            + "\n".join(request.output_constraints),
+            "input": _serialize({
+                "user_prompt": request.user_prompt,
+                "context": request.context,
+                "prompt_version": request.prompt_version,
+            }),
+        }
         encoded = _serialize(content).encode("utf-8")
     except (TypeError, ValueError, UnicodeError, OverflowError, RecursionError):
         raise AIProviderError(

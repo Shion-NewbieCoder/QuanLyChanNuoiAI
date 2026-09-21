@@ -33,8 +33,11 @@ class AIProviderError(Exception):
 
 @dataclass(frozen=True)
 class AIRequest:
-    prompt: str
+    system_prompt: str
+    user_prompt: str
     context: dict[str, object]
+    prompt_version: str
+    output_constraints: tuple[str, ...]
 
 
 @dataclass(frozen=True)

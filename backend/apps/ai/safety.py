@@ -8,20 +8,8 @@ SAFETY_NOTICE = (
     "kỹ sư chăn nuôi."
 )
 
-PROMPT_BOUNDARY = (
-    "You are a livestock-management assistant. Use only the supplied source facts. "
-    "Provide reference information only. Do not diagnose disease or replace a veterinarian "
-    "or livestock engineer. Do not invent facts absent from the input. If evidence is "
-    "insufficient, state that limitation clearly."
-)
-
-
 class AIOutputValidationError(Exception):
     """Raised internally when a provider response is not safe to present."""
-
-
-def apply_prompt_boundary(feature_prompt: str) -> str:
-    return f"{PROMPT_BOUNDARY}\n\n{feature_prompt}"
 
 
 def validate_and_normalize_output(response: object) -> AIResponse:

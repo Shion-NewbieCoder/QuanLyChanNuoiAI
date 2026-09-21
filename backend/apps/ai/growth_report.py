@@ -1,4 +1,3 @@
-import json
 from decimal import Decimal
 
 from apps.growth.models import GrowthRecord
@@ -6,7 +5,8 @@ from apps.herds.models import Herd
 
 from .orchestrator import AIOrchestrator
 from .providers import get_configured_provider
-from .safety import apply_prompt_boundary, with_safety_notice
+from .safety import with_safety_notice
+from .prompts.growth_report import build_growth_report_prompt
 
 
 SUCCESS_NOTICE = with_safety_notice("AI-generated growth report based on recorded growth data.")
@@ -64,17 +64,6 @@ def calculate_growth_metrics(records):
     }
 
 
-def build_growth_report_prompt(facts, metrics):
-    source = {"growth_records": facts, "metrics": metrics}
-    return apply_prompt_boundary(
-        "Write concise growth report presentation text using only SOURCE_FACTS. "
-        "Preserve every date, weight, and metric exactly; do not recalculate metrics. "
-        "Do not invent facts, forecast or predict future values, diagnose, or recommend treatment. "
-        "State when evidence is limited. SOURCE_FACTS: "
-        + json.dumps(source, ensure_ascii=False, default=str, separators=(",", ":"))
-    )
-
-
 def generate_growth_report(user, herd_id, start_date=None, end_date=None):
     herd = Herd.objects.get(pk=herd_id)
     facts = select_growth_facts(herd, start_date, end_date)
@@ -88,6 +77,6 @@ def generate_growth_report(user, herd_id, start_date=None, end_date=None):
         "metrics": metrics,
     }
     response = AIOrchestrator(get_configured_provider()).run(
-        user, build_growth_report_prompt(facts, metrics), context
+        user, build_growth_report_prompt(), context
     )
     return {"text": response.text, "source_count": len(facts), "metrics": metrics, "notice": SUCCESS_NOTICE}
