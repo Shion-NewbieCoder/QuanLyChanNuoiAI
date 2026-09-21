@@ -2,7 +2,7 @@ import logging
 
 from apps.users.roles import ROLE_MANAGEMENT, ROLE_TECHNICIAN, get_user_role
 
-from .providers import AIProviderError, AIProviderInterface, AIRequest, AIResponse
+from .providers import AIErrorCategory, AIProviderError, AIProviderInterface, AIRequest, AIResponse
 from .safety import AIOutputValidationError, validate_and_normalize_output
 
 
@@ -16,6 +16,10 @@ class AIAccessDenied(Exception):
 
 class AIInvocationError(Exception):
     """Safe normalized failure for callers; never contains provider credentials."""
+
+    def __init__(self, message, *, category=AIErrorCategory.PROVIDER_FAILURE):
+        super().__init__(message)
+        self.category = AIErrorCategory(category)
 
 
 class AIOrchestrator:
@@ -35,9 +39,9 @@ class AIOrchestrator:
             logger.warning(
                 "AI provider invocation failed provider=%s category=%s",
                 getattr(self.provider, "name", "unknown"),
-                exc.__class__.__name__,
+                exc.category.value,
             )
-            raise AIInvocationError("AI provider is unavailable.") from None
+            raise AIInvocationError("AI provider is unavailable.", category=exc.category) from None
         except Exception as exc:
             logger.warning(
                 "AI provider invocation failed provider=%s category=%s",
@@ -54,4 +58,6 @@ class AIOrchestrator:
                 getattr(self.provider, "name", "unknown"),
                 exc.__class__.__name__,
             )
-            raise AIInvocationError("AI provider returned an invalid response.") from None
+            raise AIInvocationError(
+                "AI provider returned an invalid response.", category=AIErrorCategory.INVALID_RESPONSE
+            ) from None

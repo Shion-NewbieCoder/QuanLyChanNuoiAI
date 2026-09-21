@@ -1,15 +1,34 @@
 from dataclasses import dataclass
+from enum import StrEnum
 from typing import Callable, Mapping, Protocol
 
-from config.environment import get_ai_configuration
+from config.environment import AIEnvironmentError, get_ai_configuration, get_openai_configuration
+
+
+class AIErrorCategory(StrEnum):
+    CONFIGURATION = "configuration_unavailable"
+    TIMEOUT = "timeout"
+    RATE_LIMIT = "rate_limit"
+    AUTHENTICATION = "authentication"
+    CONNECTION = "connection"
+    INVALID_REQUEST = "invalid_model_or_request"
+    PROVIDER_FAILURE = "provider_failure"
+    INPUT_TOO_LARGE = "input_too_large"
+    INVALID_RESPONSE = "invalid_response"
 
 
 class AIConfigurationError(Exception):
     """Safe error raised when an AI provider cannot be configured."""
 
+    category = AIErrorCategory.CONFIGURATION
+
 
 class AIProviderError(Exception):
     """Safe provider-boundary error; provider details remain internal."""
+
+    def __init__(self, message, *, category=AIErrorCategory.PROVIDER_FAILURE):
+        super().__init__(message)
+        self.category = AIErrorCategory(category)
 
 
 @dataclass(frozen=True)
@@ -38,24 +57,27 @@ def get_configured_provider(
     environ: Mapping[str, str] | None = None,
     registry: Mapping[str, ProviderFactory] | None = None,
 ) -> AIProviderInterface:
-    if environ is None:
-        configuration = get_ai_configuration()
-        provider_name = configuration.provider.strip().lower()
-        api_key = configuration.api_key
-    else:
-        provider_name = environ.get("AI_PROVIDER", "").strip().lower()
-        api_key = environ.get("AI_API_KEY", "")
+    configuration = get_ai_configuration(environ)
+    provider_name = configuration.provider
     if not provider_name:
         raise AIConfigurationError("AI provider is not configured.")
 
-    providers = registry or {}
-    factory = providers.get(provider_name)
-    if factory is None:
-        raise AIConfigurationError("Configured AI provider is not supported.")
-
     try:
-        return factory(api_key)
+        if registry is not None:
+            # An explicit registry remains authoritative, including an empty one.
+            factory = registry.get(provider_name)
+            if factory is None:
+                raise AIConfigurationError("Configured AI provider is not supported.")
+            return factory(configuration.api_key)
+        if provider_name == "openai":
+            # Lazy import: missing OpenAI configuration never blocks app startup.
+            from .openai_provider import OpenAIProvider
+
+            return OpenAIProvider(get_openai_configuration(environ))
+        raise AIConfigurationError("Configured AI provider is not supported.")
+    except AIEnvironmentError as exc:
+        raise AIConfigurationError(str(exc)) from None
     except AIConfigurationError:
         raise
-    except Exception as exc:
-        raise AIConfigurationError("AI provider configuration is invalid.") from exc
+    except Exception:
+        raise AIConfigurationError("AI provider configuration is invalid.") from None
