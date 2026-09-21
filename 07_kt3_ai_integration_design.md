@@ -1,12 +1,12 @@
 # KT3 AI Integration Design Decision Addendum
 
-Task: TSK-KT3-02. Chế độ: DOCUMENTATION / DESIGN ONLY.
+Task tạo addendum: TSK-KT3-02 (baseline commit `e7c301a`). Cập nhật tham số được phê duyệt: TSK-KT3-03. Chế độ: DOCUMENTATION / DESIGN ONLY.
 
 ## 1. Purpose and Scope
 
 Ghi nhận các Project Design Decision đã được con người phê duyệt cho KT3, sau audit kết luận READY WITH BLOCKERS. Đây không phải chi tiết vốn được đề bài gốc xác định, báo cáo implementation hoặc chứng nhận hoàn thành KT3.
 
-Chỉ tạo addendum này; giữ nguyên tài liệu KT1/KT2, application source, tests, migrations và database. Không triển khai OpenAI, cài package, chạy server/seed/migration, gọi mạng hoặc tạo kết quả thử prompt trong task này.
+TSK-KT3-03 chỉ cập nhật addendum này để chốt các implementation parameters đã để mở ở TSK-KT3-02; giữ nguyên tài liệu KT1/KT2, application source, tests, migrations và database. Các giá trị mới là quyết định KT3 hiện tại, không được diễn giải là đã tồn tại ở KT1/KT2 hoặc đã được triển khai. Không triển khai OpenAI, cài package, chạy server/seed/migration, gọi mạng, tạo secrets, commit hoặc tạo kết quả thử prompt trong task này.
 
 ## 2. Relationship to Previous Source-of-Truth Documents
 
@@ -29,7 +29,7 @@ Addendum chỉ supersede item AI-specific unresolved/conflicting được chỉ 
 | Requirements `OQ-004`; Design lựa chọn provider còn mở | `PD-KT3-AI-PROVIDER-001` giải quyết primary live provider KT3 là OpenAI; giữ abstraction. |
 | Wording `first_date` / `last_date` trong yêu cầu audit KT3 | `PD-KT3-GROWTH-METRICS-001` xác nhận public names hiện hữu, không rename. |
 | Design `AI-005`; prompt hiện gắn trong services | `PD-KT3-PROMPT-001` bổ sung separation, không đổi business semantics. |
-| `ERR-002` có nhóm lỗi AI nhưng source/tests hiện dùng `internal_error` | `PD-KT3-AI-ERROR-001` chốt safe categories cho implementation KT3 tương lai; HTTP mappings chưa chốt. |
+| `ERR-002` có nhóm lỗi AI nhưng source/tests hiện dùng `internal_error` | `PD-KT3-AI-ERROR-001` chốt safe categories cho implementation KT3 tương lai; TSK-KT3-03 chốt HTTP mappings tại mục 8, chưa sửa source/tests. |
 | KT3 yêu cầu xử lý dữ liệu dài; approved selection không cho truncate | `PD-KT3-AI-SIZE-001` chốt pre-invocation guard và từ chối rõ khi vượt giới hạn. |
 | Portable loại bỏ cấu hình AI | `PD-KT3-PORTABLE-AI-001` thay định hướng này cho live demo tương lai; chưa sửa launcher. |
 
@@ -41,12 +41,12 @@ Tất cả các quyết định sau là APPROVED PROJECT DESIGN DECISION, chưa 
 
 | Decision ID | Quyết định | Chi tiết / traceability |
 |---|---|---|
-| `PD-KT3-AI-PROVIDER-001` | OpenAI primary; official SDK sau existing interface/orchestrator; server-side config, configurable model; giữ fake providers. | Mục 5; OQ-004, AI-001, SEC-005, TSK-020. |
+| `PD-KT3-AI-PROVIDER-001` | OpenAI primary; official SDK sau existing interface/orchestrator; server-side config, configurable model; giữ fake providers. TSK-KT3-03 chốt default model, timeout/retry và Responses API store=False. | Mục 5; OQ-004, AI-001, SEC-005, TSK-020. |
 | `PD-KT3-AI-SCOPE-001` | Chỉ Reminder, Herd Summary, Growth Report; giữ sources/allowlists/thresholds/RBAC/transient output. | Mục 4, 14; ba PD-AI feature contracts, TSK-021..023. |
 | `PD-KT3-GROWTH-METRICS-001` | Existing public metric names là canonical; không rename API/UI/source/tests. | Mục 4.3; PD-AI-GROWTH-001, API-010. |
 | `PD-KT3-PROMPT-001` | Tách system/user prompts, structured data, output constraints, version; free text là data. | Mục 6, 7; AI-005, TSK-024. |
-| `PD-KT3-AI-ERROR-001` | Safe AI-specific categories, friendly Vietnamese UI, không raw provider exceptions; mappings để planning. | Mục 8; API-011, ERR-002. |
-| `PD-KT3-AI-SIZE-001` | Deterministic configurable guard; quá lớn không gọi provider, không silent truncation. | Mục 9; giữ approved feature selection. |
+| `PD-KT3-AI-ERROR-001` | Safe AI-specific categories, friendly Vietnamese UI, không raw provider exceptions; HTTP mappings được TSK-KT3-03 chốt. | Mục 8; API-011, ERR-002. |
+| `PD-KT3-AI-SIZE-001` | Deterministic configurable guard; TSK-KT3-03 chốt 65,536 bytes UTF-8 của normalized provider payload; quá lớn không gọi provider, không silent truncation. | Mục 9; giữ approved feature selection. |
 | `PD-KT3-PORTABLE-AI-001` | Portable vẫn là demo entry point; kế thừa external config, không bundle key; core chạy khi AI chưa cấu hình. | Mục 12. |
 | `PD-KT3-AI-TEST-001` | Regression dùng fake/mock/injected providers; live smoke riêng, opt-in. | Mục 11; test strategy TSK-020..024, 028/029. |
 | `PD-KT3-PROMPT-EVAL-001` | Ít nhất ba vòng thử prompt/model thật, có human evaluation/cải tiến; không bịa evidence. | Mục 13; KT3 criterion 4. |
@@ -118,17 +118,24 @@ average_weight
 
 Luồng: UI/API -> permission/validation -> approved data selection -> deterministic processing -> prompt preparation/size guard -> AIOrchestrator -> adapter/SDK -> normalized output/error -> safe presentation.
 
-Responses API tiếp tục là hướng ưu tiên trong yêu cầu audit KT3 đã duyệt; không chốt method/schema SDK chi tiết hoặc literal model ID trong task này.
+Theo TSK-KT3-03, OpenAI Responses API request phải truyền tường minh `store=False` cho AI output transient của ứng dụng. Không thêm conversation persistence hoặc AIRequest/AIResponse database models. Đây là request policy sẽ triển khai sau, không phải tuyên bố đã gọi API hoặc bảo đảm về mọi chính sách lưu giữ dữ liệu của provider.
 
 | Future configuration | Ý nghĩa |
 |---|---|
 | `AI_PROVIDER` | Chọn adapter; primary live provider KT3 là OpenAI. |
 | `OPENAI_API_KEY` | Key chỉ ở server-side external environment/configuration. |
-| `OPENAI_MODEL` | Model configurable; giá trị cụ thể chờ xác nhận. |
+| `OPENAI_MODEL` | Canonical default được phê duyệt cho project: `gpt-5.6-terra`; vẫn environment/config driven. |
+| `AI_TIMEOUT_SECONDS` | Canonical provider timeout: `30` giây. |
+| `OPENAI_MAX_RETRIES` | Canonical OpenAI SDK retry policy: `0` (không automatic SDK retries). |
+| `AI_MAX_INPUT_BYTES` | Canonical normalized provider payload limit: `65536` bytes UTF-8; chi tiết mục 9. |
+
+Không hard-code model trong feature services/views; đổi model về sau không đòi hỏi thay business logic. `gpt-5.6-terra` là approved project default, không phải kết quả xác minh availability/model access bằng network trong task này.
+
+Timeout/retry policy nhằm giữ trải nghiệm demo tương tác có thời gian chờ được kiểm soát. Theo lý do quyết định đã phê duyệt, OpenAI SDK có thể tự retry timeout, rate-limit và server failures nếu không cấu hình, làm nhân thời gian chờ cảm nhận. Future implementation phải dùng `AI_TIMEOUT_SECONDS = 30` và SDK `max_retries=0` từ `OPENAI_MAX_RETRIES`, trả safe provider error để người dùng chủ động thử lại thay vì silent SDK retries. Chưa triển khai policy này trong task tài liệu.
 
 `AI_API_KEY` là tên generic hiện có ở KT2. Contract OpenAI tương lai dùng `OPENAI_API_KEY`; không tự định nghĩa fallback/alias/precedence giữa hai tên và không phá fake/injected provider seam. Không sửa configuration hoặc .env.example trong task này.
 
-Không hard-code/commit/bundle key, không gửi key vào prompt/browser/response. Missing AI configuration không được ngăn normal livestock-management features khởi động/hoạt động. Adapter registration, payload/response mapping và dependency triển khai sau; timeout/size configuration phải được chốt trước provider implementation.
+Không hard-code/commit/bundle key, không gửi key vào prompt/browser/response. Missing AI configuration không được ngăn normal livestock-management features khởi động/hoạt động. Adapter registration, payload/response mapping và dependency triển khai sau theo parameters đã chốt; không sửa runtime configuration trong task này.
 
 ## 6. Prompt Architecture
 
@@ -154,17 +161,19 @@ Prompt definitions tách khỏi business data-selection logic. Adapter không t�
 
 ## 8. Error and Failure Model
 
-`PD-KT3-AI-ERROR-001` yêu cầu tối thiểu các conceptual categories riêng biệt:
+TSK-KT3-03 chốt public HTTP mapping cho các categories của `PD-KT3-AI-ERROR-001`:
 
-- AI configuration unavailable.
-- Provider timeout.
-- Provider rate limit.
-- Provider/network failure.
-- Invalid/empty provider response.
-- Unsupported/invalid model configuration.
-- AI input too large.
+| AI error category | HTTP status |
+|---|---|
+| AI input too large | 413 |
+| Provider rate limit | 429 |
+| Provider/network failure | 502 |
+| Invalid or empty provider response | 502 |
+| AI configuration unavailable | 503 |
+| Invalid/unsupported configured model | 503 |
+| Provider timeout | 504 |
 
-Đây chưa phải literal error_code hoặc HTTP mapping. Exact mappings được xác định trong implementation planning, không chọn HTTP status cụ thể ở đây. Giữ existing HTTP 200 empty/insufficient-data contracts tại mục 4.
+Public response phải dùng safe error codes/messages do application định nghĩa, không raw OpenAI exception text. Detailed Python exception classes và implementation structure không thuộc task này. HTTP mappings không còn là open parameter; giữ nguyên existing HTTP 200 empty/insufficient-data contracts tại mục 4.
 
 Không raw API key, raw provider payload hoặc sensitive exception text trong browser/API response. UI phải có friendly Vietnamese messages. Secret-safe verification phải xét logs/exception chains, không chỉ response. AI failure không ngăn core management; không dùng fake success để che lỗi. Source/tests hiện dùng generic internal_error chưa được thay đổi trong task này.
 
@@ -172,9 +181,11 @@ Không raw API key, raw provider payload hoặc sensitive exception text trong b
 
 `PD-KT3-AI-SIZE-001`: giữ approved selection, không silently truncate hoặc chọn latest-N, không đổi source_count để che records bị bỏ.
 
-Trước provider invocation có deterministic configurable guard trên prepared AI payload. Vượt guard: provider KHÔNG được gọi; người dùng nhận safe explicit result/error nghĩa là Dữ liệu quá lớn để xử lý bằng AI; business data không thay đổi. HTTP mapping để planning.
+TSK-KT3-03 chốt `AI_MAX_INPUT_BYTES = 65536` (65,536 bytes). Đo deterministic sau khi application đã xây normalized provider payload cho một invocation, encode UTF-8; bao gồm provider-bound system instructions, user content và context mà application chuẩn bị. Đây KHÔNG phải HTTP request body size, database row count hoặc token estimate.
 
-Không chọn numeric threshold, đơn vị/thuật toán đo cụ thể ở đây; cách đo deterministic được chốt cùng size parameter theo model/implementation trước triển khai. Guard không trở thành business filter. Các nhánh không cần provider (Reminder không nguồn; Growth 0/1) giữ nguyên mục 4.
+Trước provider invocation, nếu normalized payload size **> 65,536 bytes** thì provider KHÔNG được gọi; trả approved safe AI-input-too-large error HTTP 413, UI diễn đạt rõ Dữ liệu quá lớn để xử lý bằng AI; business data không thay đổi. Payload đúng 65,536 bytes không bị từ chối bởi size guard này; các validation/config/permission/threshold checks khác vẫn áp dụng.
+
+Đây là configurable application safety/cost/demo guard, không phải tuyên bố về maximum context window của OpenAI model. Không silent truncation hoặc latest-N substitution; guard không trở thành business filter. Các nhánh không cần provider (Reminder không nguồn; Growth 0/1) giữ nguyên mục 4.
 
 ## 10. RBAC and Data Access
 
@@ -226,16 +237,14 @@ AI_CODING_EVIDENCE.md từ KT2 tái sử dụng cho review/debug/refactor eviden
 
 ## 15. Remaining Implementation Parameters
 
-Chỉ bốn implementation parameters còn mở; không phải unresolved business rules:
+NONE — không còn unresolved implementation parameter bắt buộc trước khi bắt đầu OpenAI adapter trong phạm vi đã duyệt. TSK-KT3-03 đã giải quyết bốn parameter groups từng mở ở TSK-KT3-02:
 
-| Parameter | Trạng thái và gate |
-|---|---|
-| Exact OpenAI model ID | CHƯA XÁC NHẬN; xác nhận riêng trước provider implementation, không literal default ở đây. |
-| Exact timeout value | CHƯA XÁC NHẬN; chốt configuration/value trước provider implementation. |
-| Exact input-size threshold | CHƯA XÁC NHẬN; chốt cùng deterministic measurement phù hợp model/implementation, không truncate. |
-| Exact HTTP status mappings cho AI errors | CHƯA XÁC NHẬN; chốt trong planning trước khi đổi error behavior/tests. |
+- Model: `OPENAI_MODEL` có approved default `gpt-5.6-terra` (mục 5).
+- Timeout: `AI_TIMEOUT_SECONDS = 30`, cùng SDK retry policy `OPENAI_MAX_RETRIES = 0` (mục 5).
+- Input-size guard: `AI_MAX_INPUT_BYTES = 65536`, normalized provider payload encode UTF-8 (mục 9).
+- HTTP error mappings: bảng canonical tại mục 8.
 
-Không chọn ngầm các giá trị này. Design readiness không bỏ qua các parameter gates hoặc cấp phép implementation/live calls trong task hiện tại.
+Responses API `store=False` cũng đã được chốt tại mục 5. Code structure và detailed exception classes thuộc implementation, không phải pending parameter decision. Task hiện tại vẫn chỉ documentation update, không cấp phép triển khai adapter/live calls hoặc commit.
 
 ## 16. Audit Findings Deferred to Later Tasks
 
@@ -248,15 +257,15 @@ Không chọn ngầm các giá trị này. Design readiness không bỏ qua các
 ## 17. Implementation Readiness Checklist
 
 - [x] Đủ 10 approved decision IDs và phạm vi supersession, không rewrite KT2 history.
-- [x] OpenAI đã chọn; không tự chọn literal model ID.
+- [x] OpenAI đã chọn; approved default `gpt-5.6-terra` được ghi theo TSK-KT3-03, model vẫn config driven.
 - [x] Giữ ba feature contracts, canonical metrics, sources, RBAC, transient behavior.
 - [x] Prompt/safety/error/size/portable/test/evaluation policy đã rõ.
 - [x] Không unresolved business-rule decision trong phạm vi addendum.
-- [x] Bốn implementation parameters vẫn mở tường minh; auth finding NON-BLOCKING.
-- [ ] Xác nhận parameters trước implementation tương ứng.
+- [x] Bốn implementation parameter groups đã chốt; auth finding tiếp tục NON-BLOCKING.
+- [x] SDK retry policy `OPENAI_MAX_RETRIES = 0` và Responses API `store=False` đã ghi nhận.
 - [ ] Triển khai adapter/prompt/error/size/portable trong các task sau được phép.
 - [ ] Automated verification, opt-in live smoke, ba vòng trial thật: chưa có kết quả trong task này.
 
-Trạng thái bên dưới chỉ xác nhận THIẾT KẾ sẵn sàng làm baseline KT3, không khẳng định adapter đã hoạt động, không bỏ qua parameter gates, không tuyên bố KT3 hoàn tất hoặc thay đổi lịch sử KT2.
+Trạng thái bên dưới chỉ xác nhận THIẾT KẾ và implementation parameters sẵn sàng làm baseline KT3, không khẳng định adapter đã hoạt động, không tuyên bố KT3 hoàn tất hoặc thay đổi lịch sử KT2. Source, tests, database và launcher vẫn chưa được sửa bởi task này.
 
 STATUS: DESIGN READY FOR KT3 IMPLEMENTATION
