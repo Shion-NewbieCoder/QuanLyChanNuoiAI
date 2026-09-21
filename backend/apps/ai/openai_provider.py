@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from openai import (
     APIConnectionError,
+    APIResponseValidationError,
     APITimeoutError,
     AuthenticationError,
     BadRequestError,
@@ -100,6 +101,8 @@ class OpenAIProvider:
             raise AIProviderError("AI provider connection failed.", category=AIErrorCategory.CONNECTION) from None
         except (BadRequestError, NotFoundError):
             raise AIProviderError("AI provider model or request is invalid.", category=AIErrorCategory.INVALID_REQUEST) from None
+        except APIResponseValidationError:
+            raise AIProviderError("AI provider returned an invalid response.", category=AIErrorCategory.INVALID_RESPONSE) from None
         except Exception:
             raise AIProviderError("AI provider is unavailable.") from None
 

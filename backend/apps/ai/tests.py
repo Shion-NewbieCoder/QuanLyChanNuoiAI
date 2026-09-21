@@ -400,8 +400,8 @@ class GrowthReportApiTests(TestCase):
         factory.return_value = FailingProvider("secret-growth-key")
         before = list(GrowthRecord.objects.filter(target=self.herd).values_list("pk", "weight", "notes"))
         response = self.post(self.users[ROLE_MANAGEMENT], {"herd_id": self.herd.pk})
-        self.assertEqual(response.status_code, 500)
-        self.assertEqual(response.json()["error_code"], "internal_error")
+        self.assertEqual(response.status_code, 502)
+        self.assertEqual(response.json()["error_code"], "ai_provider_failure")
         self.assertNotIn("secret-growth-key", str(response.json()))
         self.assertNotIn("provider failure", str(response.json()))
         self.assertEqual(before, list(GrowthRecord.objects.filter(target=self.herd).values_list("pk", "weight", "notes")))
@@ -482,12 +482,12 @@ class AIOutputSafetyApiTests(TestCase):
             {"text": raw_secret, "provider": object()}, raw_secret
         )
         response = self.post("ai-herd-summary", {"herd_id": self.herd.pk})
-        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.status_code, 502)
         self.assertEqual(
             set(response.json()),
             {"error_code", "message"},
         )
-        self.assertEqual(response.json()["error_code"], "internal_error")
+        self.assertEqual(response.json()["error_code"], "ai_invalid_response")
         rendered = str(response.json())
         self.assertNotIn(raw_secret, rendered)
         self.assertNotIn("Traceback", rendered)

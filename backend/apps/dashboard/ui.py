@@ -15,7 +15,8 @@ from django.views.decorators.http import require_http_methods
 from rest_framework.exceptions import ValidationError as ApiValidationError
 
 from apps.ai import growth_report, herd_summary, reminders
-from apps.ai.providers import AIConfigurationError, get_configured_provider
+from apps.ai.providers import AIConfigurationError, AIError, get_configured_provider
+from apps.ai.errors import PROVIDER_FAILURE, public_ai_error
 from apps.ai.serializers import GrowthReportRequestSerializer, HerdSummaryRequestSerializer, ReminderRequestSerializer
 from apps.users.permissions import ROLE_ACTIONS, RoleActionPermission
 from apps.users.roles import get_user_role
@@ -233,9 +234,11 @@ def ai_screen(request):
                         "percent_change": "Thay đổi (%)", "average_weight": "Cân nặng trung bình",
                     }
                     context["ai_metrics"] = [(metric_labels[name], value) for name, value in result.get("metrics", {}).items() if name in metric_labels]
-                except AIConfigurationError:
-                    context["ai_error"] = "AI hiện chưa được cấu hình cho bản demo. Bạn vẫn có thể quản lý và xem dữ liệu bình thường."
-                except Exception:
-                    logger.exception("AI screen generation failed feature=%s", key)
-                    context["ai_error"] = "Chưa thể tạo kết quả AI. Vui lòng thử lại sau."
+                except AIError as exc:
+                    logger.warning("AI screen generation failed feature=%s category=%s", key, exc.category.value)
+                    context["ai_error"] = public_ai_error(exc).message
+                except Exception as exc:
+                    # No traceback: even unexpected exceptions can carry source data.
+                    logger.warning("AI screen generation failed feature=%s category=%s", key, exc.__class__.__name__)
+                    context["ai_error"] = PROVIDER_FAILURE.message
     return render(request, "management/ai.html", context)

@@ -2,7 +2,7 @@ import logging
 
 from apps.users.roles import ROLE_MANAGEMENT, ROLE_TECHNICIAN, get_user_role
 
-from .providers import AIErrorCategory, AIProviderError, AIProviderInterface, AIRequest, AIResponse
+from .providers import AIError, AIErrorCategory, AIProviderError, AIProviderInterface, AIRequest, AIResponse
 from .prompts import PromptSpec
 from .safety import AIOutputValidationError, validate_and_normalize_output
 
@@ -15,12 +15,8 @@ class AIAccessDenied(Exception):
     """Internal authorization boundary for future AI entry points."""
 
 
-class AIInvocationError(Exception):
+class AIInvocationError(AIProviderError):
     """Safe normalized failure for callers; never contains provider credentials."""
-
-    def __init__(self, message, *, category=AIErrorCategory.PROVIDER_FAILURE):
-        super().__init__(message)
-        self.category = AIErrorCategory(category)
 
 
 class AIOrchestrator:
@@ -42,7 +38,7 @@ class AIOrchestrator:
         )
         try:
             response = self.provider.generate(request)
-        except AIProviderError as exc:
+        except AIError as exc:
             logger.warning(
                 "AI provider invocation failed provider=%s category=%s",
                 getattr(self.provider, "name", "unknown"),

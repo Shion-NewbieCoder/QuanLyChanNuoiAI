@@ -17,18 +17,24 @@ class AIErrorCategory(StrEnum):
     INVALID_RESPONSE = "invalid_response"
 
 
-class AIConfigurationError(Exception):
+class AIError(Exception):
+    """Categorized application failure; presentation must never use its message."""
+
+    category = AIErrorCategory.PROVIDER_FAILURE
+
+    def __init__(self, message, *, category=None):
+        super().__init__(message)
+        self.category = AIErrorCategory(category if category is not None else self.category)
+
+
+class AIConfigurationError(AIError):
     """Safe error raised when an AI provider cannot be configured."""
 
     category = AIErrorCategory.CONFIGURATION
 
 
-class AIProviderError(Exception):
+class AIProviderError(AIError):
     """Safe provider-boundary error; provider details remain internal."""
-
-    def __init__(self, message, *, category=AIErrorCategory.PROVIDER_FAILURE):
-        super().__init__(message)
-        self.category = AIErrorCategory(category)
 
 
 @dataclass(frozen=True)

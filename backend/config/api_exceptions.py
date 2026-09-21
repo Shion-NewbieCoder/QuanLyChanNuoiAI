@@ -5,6 +5,9 @@ from rest_framework.response import Response
 from rest_framework.views import exception_handler as drf_exception_handler
 from rest_framework.views import set_rollback
 
+from apps.ai.errors import public_ai_error
+from apps.ai.providers import AIError
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +20,12 @@ def _error_response(error_code, message, status_code, field_errors=None):
 
 
 def api_exception_handler(exc, context):
+    if isinstance(exc, AIError):
+        public = public_ai_error(exc)
+        logger.warning("AI request failed category=%s", exc.category.value)
+        set_rollback()
+        return _error_response(public.code, public.message, public.status_code)
+
     response = drf_exception_handler(exc, context)
 
     if response is None:

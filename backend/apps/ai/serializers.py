@@ -1,9 +1,20 @@
+from collections.abc import Mapping
+
 from rest_framework import serializers
 
 from apps.herds.models import Herd
 
 
-class ReminderRequestSerializer(serializers.Serializer):
+class AIRequestSerializer(serializers.Serializer):
+    """Only application-defined selection fields; never accept client instructions."""
+
+    def to_internal_value(self, data):
+        if isinstance(data, Mapping) and set(data) - set(self.fields):
+            raise serializers.ValidationError({"non_field_errors": ["Unsupported AI request fields."]})
+        return super().to_internal_value(data)
+
+
+class ReminderRequestSerializer(AIRequestSerializer):
     scope = serializers.ChoiceField(choices=["all", "herd"])
     target_id = serializers.IntegerField(required=False, allow_null=True)
     start_date = serializers.DateField(required=False)
@@ -23,7 +34,7 @@ class ReminderRequestSerializer(serializers.Serializer):
         return attrs
 
 
-class HerdSummaryRequestSerializer(serializers.Serializer):
+class HerdSummaryRequestSerializer(AIRequestSerializer):
     herd_id = serializers.IntegerField()
 
     def validate_herd_id(self, value):
@@ -32,7 +43,7 @@ class HerdSummaryRequestSerializer(serializers.Serializer):
         return value
 
 
-class GrowthReportRequestSerializer(serializers.Serializer):
+class GrowthReportRequestSerializer(AIRequestSerializer):
     herd_id = serializers.IntegerField()
     start_date = serializers.DateField(required=False)
     end_date = serializers.DateField(required=False)

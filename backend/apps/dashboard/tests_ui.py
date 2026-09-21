@@ -251,7 +251,7 @@ class ManagementUITests(TestCase):
     def test_ai_unconfigured_provider_is_friendly(self):
         with patch.dict("os.environ", {"AI_PROVIDER": "", "AI_API_KEY": ""}):
             response = self.client.post("/ai/", {"feature": "herd_summary", "herd_summary-herd_id": self.herd.pk})
-        self.assertContains(response, "AI hiện chưa được cấu hình")
+        self.assertContains(response, "AI chưa được cấu hình hoặc cấu hình không hợp lệ.")
         self.assertNotContains(response, "Traceback")
 
     def test_ai_validation_and_insufficient_data(self):
