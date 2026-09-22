@@ -164,7 +164,7 @@ class OpenRouterProviderTests(NoNetwork, SimpleTestCase):
         self.assertEqual(sent["truncation"], "disabled")
         self.assertEqual(sent["instructions"], self.request.system_prompt + "\n\nOutput constraints:\n" + "\n".join(self.request.output_constraints))
         self.assertEqual(json.loads(sent["input"]), {
-            "user_prompt": self.request.user_prompt, "prompt_version": "growth-report-v1",
+            "user_prompt": self.request.user_prompt, "prompt_version": self.request.prompt_version,
             "context": {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": "12.50"}},
         })
         self.assertEqual(result, AIResponse("  report  ", "openrouter"))
