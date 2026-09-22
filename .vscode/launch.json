@@ -5,7 +5,7 @@
       "name": "Run Livestock Management Demo",
       "type": "node-terminal",
       "request": "launch",
-      "command": "cmd.exe /d /c .\\DEMO_PORTABLE\\DEMO.exe",
+      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\tools\\run_f5_live_ai.ps1",
       "cwd": "${workspaceFolder}"
     }
   ]

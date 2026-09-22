@@ -141,14 +141,15 @@ def main():
     process = None
     try:
         outside = Path(tempfile.mkdtemp(prefix="Nhóm 08 Demo ")) / "DEMO_PORTABLE"
-        shutil.copytree(ROOT / "DEMO_PORTABLE", outside)
+        # Test fresh disposable data, never copy or alter teacher data.
+        shutil.copytree(ROOT / "DEMO_PORTABLE", outside, ignore=shutil.ignore_patterns("data"))
         exe = outside / "DEMO.exe"
         db = outside / "data" / "db.sqlite3"
         assert not db.exists(), "Release must not contain a database before first run"
         forbidden = [str(p.relative_to(outside)) for p in outside.rglob("*") if p.name in (".venv", "node_modules", "__pycache__", ".env", "debug.log") or p.suffix in (".pyc", ".pyo")]
         assert not forbidden, forbidden
         env = os.environ.copy()
-        for key in ("PYTHONHOME", "PYTHONPATH", "VIRTUAL_ENV", "AI_PROVIDER", "AI_API_KEY", "DJANGO_SECRET_KEY"):
+        for key in ("PYTHONHOME", "PYTHONPATH", "VIRTUAL_ENV", "AI_PROVIDER", "AI_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_KEY", "DJANGO_SECRET_KEY"):
             env.pop(key, None)
         env.update(PATH=str(Path(os.environ["SystemRoot"]) / "System32"), HTTP_PROXY="http://127.0.0.1:9", HTTPS_PROXY="http://127.0.0.1:9", ALL_PROXY="http://127.0.0.1:9", NO_PROXY="localhost,127.0.0.1")
         result.update(test_directory=str(outside), runtime_path=env["PATH"], forbidden_artifacts=forbidden)
@@ -227,8 +228,15 @@ def main():
         result["shutdown"] = "PASS: actual Ctrl+C exits code 0 and releases port on both runs"
         configuration = json.loads((ROOT / ".vscode/launch.json").read_text(encoding="utf-8"))["configurations"][0]
         assert configuration["type"] == "node-terminal" and configuration["cwd"] == "${workspaceFolder}"
+        (outside.parent / "tools").mkdir()
+        shutil.copy2(ROOT / "tools/run_f5_live_ai.ps1", outside.parent / "tools/run_f5_live_ai.ps1")
+        env["PATH"] += os.pathsep + str(Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0")
+        env["OPENROUTER_API_KEY"] = "offline-placeholder-not-a-credential"
         process, lines = start(exe, env, "f5-command", command=configuration["command"], cwd=outside.parent)
-        Browser().login("demo_manager")
+        live_ui = Browser()
+        live_ui.login("demo_manager")
+        ai, _ = live_ui.request("/ai/")  # GET only: never submit an inference request.
+        assert "AI hiện chưa được cấu hình" not in ai
         stop(process, expected_codes=(0, 1, -1073741510, 3221225786))
         process = None
         assert any("[DEMO_STOPPED]" in line for line in lines)

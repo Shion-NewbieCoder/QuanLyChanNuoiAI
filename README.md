@@ -12,8 +12,16 @@ Không cần cài Python, pip, venv, Node/npm, Docker hay quyền quản trị.
 Không cần VS Code và không cần nhập lệnh terminal.
 
 **Cách B — VS Code:** mở thư mục gốc project → nhấn **F5** → chọn
-**Run Livestock Management Demo**. Cấu hình gọi cùng `DEMO_PORTABLE/DEMO.exe`
-bằng terminal runner có sẵn của VS Code (`node-terminal`); tên runner này
+**Run Livestock Management Demo**. Wrapper PowerShell `tools/run_f5_live_ai.ps1`
+gọi cùng `DEMO_PORTABLE/DEMO.exe` qua terminal runner của VS Code (`node-terminal`).
+F5 dùng OpenRouter với model `nvidia/nemotron-3-ultra-550b-a55b:free` và retry = 0.
+Nếu môi trường đã có `OPENROUTER_API_KEY`, wrapper dùng lại; nếu chưa có,
+nhập key tại lời nhắc che ký tự. Key chỉ ở bộ nhớ/môi trường tiến trình launcher
+và tiến trình con, không lưu vào file hoặc đối số lệnh; EXE không chứa key.
+Nhập trống hoặc hủy sẽ báo `AI_KEY_REQUIRED` và không khởi động demo.
+Không commit secret. AI live cần Internet và có thể lỗi do provider hoặc quota.
+Đăng nhập Manager hoặc Technician rồi mở `/ai/` để dùng ba tính năng hiện có.
+Tên runner này
 không có nghĩa ứng dụng cần cài Node. Nếu đã tắt bộ JavaScript Debugger tích
 hợp của VS Code, bật lại hoặc sử dụng cách A.
 

@@ -84,8 +84,7 @@ def run():
     os.environ["DJANGO_ALLOWED_HOSTS"] = "127.0.0.1,localhost"
     os.environ["DJANGO_DEMO_DB_PATH"] = str(data / "db.sqlite3")
     os.environ["DJANGO_PORTABLE_DEMO"] = "true"
-    os.environ.pop("AI_PROVIDER", None)
-    os.environ.pop("AI_API_KEY", None)
+    # Inherit optional provider configuration; credentials are never bundled or saved.
 
     import django
     from django.core.management import call_command
