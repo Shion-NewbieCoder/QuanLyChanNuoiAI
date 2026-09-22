@@ -102,7 +102,7 @@ các trường văn bản tự do khác giữ nguyên hợp đồng hiện có.
 Trang danh sách gửi `search`, exact filters và `ordering` đến bộ lọc backend
 đã có; phân trang 20 dòng. Thống kê tổng hợp toàn bộ dữ liệu đã ghi nhận qua
 services hiện có. AI trả kết quả trong trang HTML, không lưu kết quả vào CSDL;
-khi chưa có provider, trang hiển thị thông báo an toàn. Không có chatbot hoặc
+khi chưa cấu hình provider hoặc provider gặp lỗi, trang hiển thị thông báo an toàn. Không có chatbot hoặc
 chức năng chẩn đoán.
 
 CSS có bố cục desktop/tablet/mobile, bảng cuộn ngang và danh mục thu gọn trên
@@ -116,7 +116,7 @@ Chi tiết triển khai và xác minh: [UI_COMPLETION_REPORT.md](UI_COMPLETION_R
 - Cơ sở dữ liệu: SQLite.
 - Dashboard: Django Templates, Bootstrap 5.
 - Frontend scaffold: React, Vite.
-- AI: `AIOrchestrator` và provider adapter trung lập, cấu hình qua biến môi trường.
+- AI: `PromptSpec` → `AIOrchestrator` → provider adapter; OpenRouter là primary live provider KT3, OpenAI là adapter tùy chọn; cấu hình qua biến môi trường.
 
 ## Cấu trúc chính
 
@@ -159,14 +159,15 @@ Các thư mục `.venv/`, `__pycache__/`, `frontend/node_modules/`, `frontend/di
   và cài dependencies khi cần.
 - Optional frontend development: Node.js và npm chỉ khi cần chạy/build React/Vite
   scaffold.
-- Optional live AI: concrete provider adapter và environment configuration tương
-  ứng; không bắt buộc cho dashboard/core demo.
+- Optional live AI: source đã có OpenRouter/OpenAI adapters; cần cấu hình environment
+  hợp lệ và kết nối mạng; không bắt buộc cho dashboard/core demo.
 - PowerShell chỉ cần cho các ví dụ development thủ công bên dưới.
 
 Portable và source bootstrap tạo random `DJANGO_SECRET_KEY` chỉ trong process environment,
 không in hoặc ghi secret ra file. Django management/dashboard chạy khi
-`AI_PROVIDER` và `AI_API_KEY` rỗng; live generation vẫn cần concrete provider
-adapter/configuration. Source bootstrap khi thất bại hiển thị
+chưa cấu hình AI; live generation dùng adapter hiện có và credential từ environment.
+Việc source hỗ trợ live AI không khẳng định gói portable đã được cập nhật hoặc chứa API key.
+Source bootstrap khi thất bại hiển thị
 `PYTHON_MISSING`, `VENV_CREATE_FAILED`, `PIP_INSTALL_FAILED`, `MIGRATION_FAILED`,
 `SEED_FAILED`, `SERVER_START_FAILED` hoặc `PORT_UNAVAILABLE` cùng next action;
 bootstrap không dừng process khác đang chiếm port 8000.
@@ -191,8 +192,9 @@ python -m pip install -r requirements.txt
 | `DJANGO_ALLOWED_HOSTS` | Không | `127.0.0.1,localhost` | Danh sách host cách nhau bằng dấu phẩy. |
 | `DJANGO_DEMO_DB_PATH` | Không | `backend/db.sqlite3` | Portable tự đặt đường dẫn `data/db.sqlite3` cạnh EXE. |
 | `DJANGO_PORTABLE_DEMO` | Không | `false` | Portable tự bật thẻ thông tin tài khoản demo trên trang đăng nhập. |
-| `AI_PROVIDER` | Không để khởi động; cần cho live AI | Rỗng | Tên provider adapter đã được đăng ký. |
-| `AI_API_KEY` | Không để khởi động; tùy provider live | Rỗng | Credential của provider, không lưu trong source. |
+| `AI_PROVIDER` | Không để khởi động; cần cho live AI | Rỗng | Chọn `openrouter` cho primary KT3; `openai` là adapter tùy chọn. |
+| `OPENROUTER_API_KEY` | Cần khi gọi OpenRouter | Không có | Credential ngoài source, cung cấp qua environment; không commit. |
+| `OPENROUTER_MODEL` | Không | `nvidia/nemotron-3-ultra-550b-a55b:free` | Model cố định đã được kiểm thử live trong KT3. |
 
 Ví dụ cấu hình local trong phiên PowerShell hiện tại:
 
@@ -272,6 +274,8 @@ Phân quyền được kiểm tra ở backend; việc ẩn nút trên giao diệ
 
 ## Chức năng AI
 
+Ba feature hiện có: **AI Reminder** (nhắc lịch vaccine), **AI Herd Summary** (tóm tắt đàn), **AI Growth Report** (báo cáo tăng trưởng).
+
 Các endpoint hiện có:
 
 ```text
@@ -284,7 +288,13 @@ AI chỉ nhận factual data đã được giảm thiểu theo contract và quy�
 
 Project có thể khởi động, chạy dashboard, seed và tests khi chưa cấu hình provider. Regression tests dùng fake/injected provider và không gọi mạng. `seed_demo` không gọi AI.
 
-Source hiện tại cung cấp provider-neutral interface nhưng **không đóng gói concrete live-provider adapter/vendor**. Vì vậy live AI cần một adapter được phê duyệt/đăng ký cùng `AI_PROVIDER` và `AI_API_KEY`; nếu chưa có, AI endpoint thất bại an toàn. Không được ghi API key vào source.
+Source đã triển khai live provider support: **OpenRouter** là primary provider KT3, với model cố định đã thử nghiệm **`nvidia/nemotron-3-ultra-550b-a55b:free`**. **OpenAI** vẫn là adapter tùy chọn. Các feature dùng `PromptSpec` tách chỉ dẫn, dữ liệu nguồn có cấu trúc và output constraints; gọi provider qua `AIOrchestrator`, không gọi trực tiếp từ UI.
+
+Cấu hình primary provider qua environment: `AI_PROVIDER`, `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`; Django cần `DJANGO_SECRET_KEY`. Secrets phải nằm ngoài source/Git, không commit và không nhúng vào `DEMO.exe`. Không coi việc adapter tồn tại là bảo đảm portable đã được cấu hình live AI.
+
+AI chỉ cung cấp thông tin tham khảo, không thay thế bác sĩ thú y/kỹ sư chăn nuôi. Kết quả là transient, không ghi đè dữ liệu nghiệp vụ. Live inference không được bảo đảm luôn thành công: cấu hình, giới hạn provider, timeout hoặc response không hợp lệ được xử lý bằng lỗi an toàn.
+
+Minh chứng thử nghiệm **V1 → V2 → V3**, gồm kết quả và giới hạn thực tế, nằm tại [KT3_AI_PROMPT_EXPERIMENTS.md](KT3_AI_PROMPT_EXPERIMENTS.md). Phiên bản production được chọn và sinh viên phê duyệt: **Reminder V2, Herd Summary V3, Growth Report V2**.
 
 ## React/Vite scaffold
 
@@ -347,7 +357,7 @@ Evidence gần nhất ngày 2026-09-08:
 - Không có JWT/localStorage token flow; hệ thống dùng Django session.
 - CSRF, template autoescaping, server-side RBAC, centralized safe errors và AI output validation đang được áp dụng.
 - React/Vite chỉ là scaffold, không phải business UI hoàn chỉnh.
-- Live AI chưa khả dụng nếu chưa có concrete provider adapter và credential ngoài source.
+- Live AI dùng adapters đã có nhưng vẫn cần credential/configuration ngoài source và provider khả dụng; không bảo đảm mọi inference thành công.
 - AI chỉ là thông tin tham khảo, không chẩn đoán bệnh hoặc thay thế bác sĩ thú y/kỹ sư chăn nuôi.
 
 ```text
