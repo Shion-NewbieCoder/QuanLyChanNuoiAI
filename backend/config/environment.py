@@ -68,3 +68,53 @@ def get_openai_configuration(environ: Mapping[str, str] | None = None) -> OpenAI
         max_retries=retries,
         max_input_bytes=limit,
     )
+
+
+@dataclass(frozen=True)
+class OpenRouterConfiguration:
+    api_key: str = field(repr=False)
+    model: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    base_url: str = "https://openrouter.ai/api/v1"
+    timeout_seconds: float = 30
+    max_retries: int = 0
+    max_input_bytes: int = 65536
+
+    def __post_init__(self):
+        for name, value in (
+            ("OPENROUTER_API_KEY", self.api_key),
+            ("OPENROUTER_MODEL", self.model),
+            ("OPENROUTER_BASE_URL", self.base_url),
+        ):
+            if not isinstance(value, str) or not value.strip():
+                raise AIEnvironmentError(f"{name} must be non-empty.")
+        if (
+            isinstance(self.timeout_seconds, bool)
+            or not isinstance(self.timeout_seconds, (int, float))
+            or not math.isfinite(self.timeout_seconds)
+            or self.timeout_seconds <= 0
+        ):
+            raise AIEnvironmentError("AI_TIMEOUT_SECONDS must be finite and positive.")
+        for name, value, minimum in (
+            ("OPENROUTER_MAX_RETRIES", self.max_retries, 0),
+            ("AI_MAX_INPUT_BYTES", self.max_input_bytes, 1),
+        ):
+            if type(value) is not int or value < minimum:
+                raise AIEnvironmentError(f"{name} is invalid.")
+
+
+def get_openrouter_configuration(environ: Mapping[str, str] | None = None) -> OpenRouterConfiguration:
+    env = os.environ if environ is None else environ
+    try:
+        timeout = float(env.get("AI_TIMEOUT_SECONDS", "30"))
+        retries = int(env.get("OPENROUTER_MAX_RETRIES", "0"))
+        limit = int(env.get("AI_MAX_INPUT_BYTES", "65536"))
+    except (ValueError, TypeError, OverflowError):
+        raise AIEnvironmentError("AI numeric configuration is invalid.") from None
+    return OpenRouterConfiguration(
+        api_key=env.get("OPENROUTER_API_KEY", ""),
+        model=env.get("OPENROUTER_MODEL", "nvidia/nemotron-3-ultra-550b-a55b:free").strip(),
+        base_url=env.get("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1").strip(),
+        timeout_seconds=timeout,
+        max_retries=retries,
+        max_input_bytes=limit,
+    )

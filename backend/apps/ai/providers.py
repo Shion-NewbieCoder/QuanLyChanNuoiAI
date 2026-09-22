@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import Callable, Mapping, Protocol
 
-from config.environment import AIEnvironmentError, get_ai_configuration, get_openai_configuration
+from config.environment import AIEnvironmentError, get_ai_configuration, get_openai_configuration, get_openrouter_configuration
 
 
 class AIErrorCategory(StrEnum):
@@ -83,6 +83,10 @@ def get_configured_provider(
             from .openai_provider import OpenAIProvider
 
             return OpenAIProvider(get_openai_configuration(environ))
+        if provider_name == "openrouter":
+            from .openrouter_provider import OpenRouterProvider
+
+            return OpenRouterProvider(get_openrouter_configuration(environ))
         raise AIConfigurationError("Configured AI provider is not supported.")
     except AIEnvironmentError as exc:
         raise AIConfigurationError(str(exc)) from None
