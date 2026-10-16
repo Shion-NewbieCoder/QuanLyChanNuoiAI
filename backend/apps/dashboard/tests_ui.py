@@ -271,6 +271,17 @@ class ManagementUITests(TestCase):
         self.assertContains(response, "&lt;script&gt;")
         self.assertNotContains(response, '<script>alert("ai")</script>')
 
+    def test_ai_assistant_renders_chat_form_with_session_csrf_and_existing_features(self):
+        response = self.client.get("/ai/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-ai-chat')
+        self.assertContains(response, 'data-chat-history')
+        self.assertContains(response, 'name="csrfmiddlewaretoken"')
+        self.assertContains(response, 'name="question"')
+        self.assertContains(response, "ai-chat.js")
+        for title in ("Nhắc lịch", "Tóm tắt đàn", "Báo cáo tăng trưởng"):
+            self.assertContains(response, title)
+
     def test_login_ui_preserves_next_and_safe_logout(self):
         self.client.logout()
         response = self.client.get("/login/?next=/herds/")

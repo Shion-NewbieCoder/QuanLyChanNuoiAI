@@ -91,11 +91,14 @@ if ($null -eq $value -or $value.Length -ne 1) { exit 3 }
 $value.Dispose()
 """)
 
-    def test_f5_uses_interactive_terminal(self):
+    def test_f5_runs_source_bootstrap_in_interactive_terminal(self):
         config = json.loads((ROOT / '.vscode/launch.json').read_text())['configurations'][0]
         self.assertEqual(config['type'], 'node-terminal')
-        self.assertIn('run_f5_live_ai.ps1', config['command'])
-        self.assertNotIn('-NonInteractive', config['command'])
+        self.assertEqual(config['request'], 'launch')
+        self.assertEqual(config['cwd'], '${workspaceFolder}')
+        self.assertEqual(config['command'], 'python .\\tools\\run_demo.py')
+        self.assertNotIn('run_f5_live_ai.ps1', config['command'])
+        self.assertNotIn('DEMO.exe', config['command'])
 
     def test_unavailable_noninteractive_prompt_exits_explicitly(self):
         self.assertIn('[AI_KEY_REQUIRED]', self.run_ps('if ((Invoke-LiveDemo) -ne 1) { exit 2 }'))

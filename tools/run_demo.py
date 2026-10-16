@@ -11,6 +11,7 @@ import socket
 import subprocess
 import sys
 import time
+import webbrowser
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,7 @@ VENV_PYTHON = VENV_DIR / "Scripts" / "python.exe"
 DEPENDENCY_MARKER = VENV_DIR / ".requirements.sha256"
 HOST = "127.0.0.1"
 PORT = 8000
-DASHBOARD_URL = f"http://{HOST}:{PORT}/dashboard/"
+LOGIN_URL = f"http://{HOST}:{PORT}/login/"
 READINESS_PATH = "/login/"
 
 
@@ -267,6 +268,8 @@ def run_server(environment):
             )
         message("[DEMO_READY]")
         print_demo_details()
+        if not webbrowser.open(LOGIN_URL):
+            message(f"[BROWSER_OPEN_FAILED] Open this URL manually: {LOGIN_URL}")
         return_code = process.wait()
     except KeyboardInterrupt:
         message("\n[DEMO] Server stopped.")
@@ -287,7 +290,7 @@ def print_demo_details():
     message("============================================================")
     message(" LIVESTOCK MANAGEMENT AI - LOCAL DEMO")
     message("============================================================")
-    message(f"Dashboard: {DASHBOARD_URL}")
+    message(f"Login: {LOGIN_URL}")
     message("Demo account:")
     message("Username: demo_manager")
     message("Password: DemoOnly-2026!")

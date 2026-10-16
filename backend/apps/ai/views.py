@@ -7,7 +7,20 @@ from apps.users.permissions import RoleActionPermission
 from .reminders import generate_reminders
 from .herd_summary import NOTICE, generate_herd_summary
 from .growth_report import generate_growth_report
-from .serializers import GrowthReportRequestSerializer, HerdSummaryRequestSerializer, ReminderRequestSerializer
+from .chat import answer_chat_question
+from .serializers import ChatRequestSerializer, GrowthReportRequestSerializer, HerdSummaryRequestSerializer, ReminderRequestSerializer
+
+
+class ChatView(APIView):
+    permission_classes = [IsAuthenticated, RoleActionPermission]
+    permission_resource = "ai"
+    permission_action = "read"
+
+    def post(self, request):
+        serializer = ChatRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        result = answer_chat_question(request.user, serializer.validated_data["question"])
+        return Response({"status": "success", **result})
 
 
 class ReminderView(APIView):

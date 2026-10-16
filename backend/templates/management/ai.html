@@ -1,4 +1,5 @@
 {% extends "management/shell.html" %}
+{% load static %}
 {% block title %}AI Assistant | Nông trại AI{% endblock %}
 {% block breadcrumb %}AI Assistant{% endblock %}
 {% block content %}
@@ -7,5 +8,24 @@
 {% if ai_error %}<div class="alert alert-warning" role="alert">{{ ai_error }}</div>{% endif %}
 {% if ai_result %}<section class="card mb-4" aria-live="polite"><div class="card-body"><h2 class="h4">{{ result_title }}</h2><p class="text-secondary">{{ ai_result.source_count }} bản ghi nguồn</p>{% if ai_result.text %}<div class="ai-result">{{ ai_result.text|linebreaksbr }}</div>{% else %}<p>Chưa có đủ dữ liệu phù hợp để tạo nội dung AI. Hãy xem các dữ liệu nguồn và bổ sung khi có thông tin thực tế.</p>{% endif %}</div></section>{% endif %}
 {% if ai_metrics %}<section class="card mb-4"><div class="card-body"><h2 class="h5">Số liệu tăng trưởng đã ghi nhận</h2><dl class="detail-grid">{% for label,value in ai_metrics %}<dt>{{ label }}</dt><dd>{{ value|default_if_none:"Chưa đủ dữ liệu" }}</dd>{% endfor %}</dl></div></section>{% endif %}
+<section class="card mb-4" aria-labelledby="ai-chat-title" data-ai-chat data-endpoint="{% url 'ai-chat' %}">
+  <div class="card-body">
+    <h2 class="h4" id="ai-chat-title">Hỏi đáp dữ liệu chăn nuôi</h2>
+    <p class="text-secondary">Hỏi về dữ liệu đã ghi nhận như đàn, chuồng, chăm sóc, thức ăn, vaccine, tăng trưởng hoặc thống kê.</p>
+    <div class="small text-secondary mb-3">Chat chỉ dùng dữ liệu hệ thống và không chẩn đoán, kê thuốc hay dự báo. Nội dung chỉ tồn tại trong trang hiện tại.</div>
+    <div class="ai-chat-history border rounded p-3 mb-3" data-chat-history aria-live="polite" aria-label="Hội thoại"></div>
+    <form data-chat-form>
+      {% csrf_token %}
+      <label class="form-label" for="ai-chat-question">Câu hỏi</label>
+      <div class="input-group">
+        <textarea class="form-control" id="ai-chat-question" name="question" rows="2" maxlength="500" required placeholder="Ví dụ: Đàn nào đang được ghi nhận trong hệ thống?"></textarea>
+        <button class="btn btn-success" type="submit">Gửi</button>
+      </div>
+      <div class="form-text">Tối đa 500 ký tự. Câu hỏi ngoài phạm vi dữ liệu chăn nuôi sẽ được từ chối.</div>
+      <div class="small text-danger mt-2" data-chat-error role="alert"></div>
+    </form>
+  </div>
+</section>
 {% include "management/ai_cards.html" %}
+<script src="{% static 'js/ai-chat.js' %}" defer></script>
 {% endblock %}

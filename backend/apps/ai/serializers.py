@@ -57,3 +57,7 @@ class GrowthReportRequestSerializer(AIRequestSerializer):
         if attrs.get("start_date") and attrs.get("end_date") and attrs["start_date"] > attrs["end_date"]:
             raise serializers.ValidationError({"end_date": "Must be on or after start_date."})
         return attrs
+
+
+class ChatRequestSerializer(AIRequestSerializer):
+    question = serializers.CharField(max_length=500, trim_whitespace=True)

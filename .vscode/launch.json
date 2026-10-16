@@ -2,10 +2,10 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run Livestock Management Demo",
+      "name": "Run Livestock Management (Django source)",
       "type": "node-terminal",
       "request": "launch",
-      "command": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\\tools\\run_f5_live_ai.ps1",
+      "command": "python .\\tools\\run_demo.py",
       "cwd": "${workspaceFolder}"
     }
   ]

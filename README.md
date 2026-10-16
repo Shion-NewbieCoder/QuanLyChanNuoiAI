@@ -11,29 +11,25 @@ Không cần cài Python, pip, venv, Node/npm, Docker hay quyền quản trị.
 **Cách A — mở trực tiếp:** vào `DEMO_PORTABLE`, double-click **DEMO.exe**.
 Không cần VS Code và không cần nhập lệnh terminal.
 
-**Cách B — VS Code:** mở thư mục gốc project → nhấn **F5** → chọn
-**Run Livestock Management Demo**. Wrapper PowerShell `tools/run_f5_live_ai.ps1`
-gọi cùng `DEMO_PORTABLE/DEMO.exe` qua terminal runner của VS Code (`node-terminal`).
-F5 dùng OpenRouter với model `nvidia/nemotron-3-ultra-550b-a55b:free` và retry = 0.
-Nếu môi trường đã có `OPENROUTER_API_KEY`, wrapper dùng lại; nếu chưa có,
-nhập key tại lời nhắc che ký tự. Key chỉ ở bộ nhớ/môi trường tiến trình launcher
-và tiến trình con, không lưu vào file hoặc đối số lệnh; EXE không chứa key.
-Nhập trống hoặc hủy sẽ báo `AI_KEY_REQUIRED` và không khởi động demo.
+**Cách B — VS Code chạy mã nguồn:** mở thư mục gốc project rồi nhấn **F5**.
+Cấu hình **Run Livestock Management (Django source)** chạy `tools/run_demo.py`
+trên mã Django trong `backend/`, không chạy EXE. Bootstrap tự tạo `.venv` lần đầu,
+cài requirements khi danh sách hoặc môi trường dependencies thay đổi, chạy migration
+và seed dữ liệu demo, rồi mở trang đăng nhập tại `http://127.0.0.1:8000/login/`.
+Không cần OpenRouter API key để khởi động hoặc dùng các chức năng ngoài AI; không có
+AI live nào được gọi khi khởi động. Các chức năng AI vẫn đọc credential từ environment
+khi được sử dụng và hiển thị thông báo an toàn nếu chưa cấu hình.
+
+Giữ phiên F5 đang chạy trong lúc dùng ứng dụng; nhấn **Ctrl+C** trong terminal để dừng.
+Nếu cổng 8000 đang bận, bootstrap báo `PORT_UNAVAILABLE` và hướng dẫn đóng server cũ;
+nó không tự dừng process khác. Nếu trình duyệt không tự mở, truy cập URL đăng nhập ở trên.
+`RUN_DEMO.bat` cũng tiếp tục chạy bootstrap source theo cách tương tự.
 Không commit secret. AI live cần Internet và có thể lỗi do provider hoặc quota.
 Đăng nhập Manager hoặc Technician rồi mở `/ai/` để dùng ba tính năng hiện có.
-Tên runner này
-không có nghĩa ứng dụng cần cài Node. Nếu đã tắt bộ JavaScript Debugger tích
-hợp của VS Code, bật lại hoặc sử dụng cách A.
-
-EXE tự tạo dữ liệu, chạy migration và seed, rồi mở trình duyệt mặc định tại
-`http://127.0.0.1:8000/login/?next=/dashboard/` sau khi HTTP đăng nhập sẵn sàng.
-Giữ cửa sổ demo mở trong lúc sử dụng; đóng cửa sổ hoặc nhấn **Ctrl+C** để dừng.
-Khi gặp `PORT_UNAVAILABLE`, đóng phiên demo/server cũ rồi chạy lại.
 
 Giao diện quản lý và Bootstrap dùng tài nguyên cục bộ, không cần Internet.
 AI chưa cấu hình sẽ hiển thị thông báo an toàn; không có kết quả AI giả.
-Dữ liệu được giữ tại `DEMO_PORTABLE/data/db.sqlite3` qua các lần chạy.
-Hãy giải nén vào thư mục có quyền ghi và sao lưu tệp này khi cần giữ dữ liệu.
+Dữ liệu portable được giữ tại `DEMO_PORTABLE/data/db.sqlite3`; sao lưu tệp này để giữ dữ liệu portable.
 
 Tài khoản demo:
 
@@ -53,7 +49,7 @@ Tài khoản trên chỉ phục vụ chấm bài/thực hành, không dùng cho 
 Cần Python 3.12+ để sửa/chạy mã nguồn hoặc build EXE. `RUN_DEMO.bat` vẫn là
 tiện ích chạy **mã nguồn** cho lập trình viên: tạo `.venv`, cài requirements,
 migrate và seed. Lần cài dependencies đầu cần mạng hoặc pip cache đầy đủ.
-F5 hiện chạy bản đã build; sửa mã nguồn xong phải build lại để F5 nhận thay đổi.
+F5 chạy trực tiếp mã nguồn Django; không cần build lại EXE sau khi sửa mã.
 
 Để build trên Windows x64, chạy **BUILD_DEMO.bat** ở gốc dự án. Công cụ dùng
 `.venv` phát triển, cài PyInstaller theo `packaging/requirements-build.txt`,
@@ -88,7 +84,7 @@ Chi tiết kết quả và giới hạn kiểm chứng: [PORTABLE_DEMO_REPORT.md
 
 ## Sử dụng giao diện quản lý
 
-Sau F5, đăng nhập bằng tài khoản demo. Sidebar dẫn đến các trang HTML sau,
+Sau khi chạy Django source bằng F5, đăng nhập bằng tài khoản demo. Sidebar dẫn đến các trang HTML sau,
 không cần chạy React/Vite:
 
 | Mục | Đường dẫn |
@@ -281,6 +277,11 @@ Phân quyền được kiểm tra ở backend; việc ẩn nút trên giao diệ
 - Nếu có nhiều vai trò, precedence là `quản lý > kỹ thuật viên > nhân viên`.
 
 ## Chức năng AI
+
+Trang AI Assistant có khu vực hỏi đáp dữ liệu chăn nuôi. Backend chỉ truy vấn các nhóm dữ liệu
+trong danh sách cho phép được nhận diện từ câu hỏi, giới hạn số bản ghi và từ chối câu ngoài
+phạm vi trước khi gọi provider; câu trả lời không được lưu, không thay đổi dữ liệu và không dùng
+để tư vấn thú y.
 
 Ba feature hiện có: **AI Reminder** (nhắc lịch vaccine), **AI Herd Summary** (tóm tắt đàn), **AI Growth Report** (báo cáo tăng trưởng).
 
