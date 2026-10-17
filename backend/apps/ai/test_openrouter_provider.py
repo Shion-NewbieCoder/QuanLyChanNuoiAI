@@ -24,6 +24,7 @@ from .openrouter_provider import OpenRouterProvider
 from .orchestrator import AIInvocationError, AIOrchestrator
 from .prompts.growth_report import build_growth_report_prompt
 from .providers import AIConfigurationError, AIErrorCategory, AIProviderError, AIRequest, AIResponse, get_configured_provider
+from .prompts.chat import build_chat_prompt
 
 
 MODEL = "nvidia/nemotron-3-ultra-550b-a55b:free"
@@ -39,6 +40,9 @@ def configuration(**overrides):
 def fake_client(text="  report  "):
     client = Mock()
     client.responses.create.return_value = SimpleNamespace(output_text=text)
+    client.chat.completions.create.return_value = SimpleNamespace(
+        choices=[SimpleNamespace(message=SimpleNamespace(content=text))],
+    )
     return client
 
 
@@ -47,6 +51,16 @@ def request_for_test(context=None):
     return AIRequest(spec.system_prompt, spec.user_prompt,
                      context if context is not None else {"herd": {"id": 1, "name": "Đàn bò"}, "metrics": {"average_weight": Decimal("12.50")}},
                      spec.version, spec.output_constraints)
+
+
+def chat_request_for_test(context=None):
+    spec = build_chat_prompt()
+    return AIRequest(spec.system_prompt, spec.user_prompt,
+                     context if context is not None else {
+                         "question": "Đàn CHAT-001 tên là gì?", "history": [],
+                         "sources": {"herds": [{"code": "CHAT-001", "name": "Đàn bò"}]},
+                         "source_count": 1,
+                     }, spec.version, spec.output_constraints)
 
 
 class NoNetwork:
@@ -152,8 +166,29 @@ class OpenRouterProviderTests(NoNetwork, SimpleTestCase):
         self.provider = OpenRouterProvider(configuration(), client=self.client)
         self.request = request_for_test()
 
-    def test_reuses_identical_transport_and_size_guard(self):
-        self.assertIs(OpenRouterProvider.generate, OpenAIProvider.generate)
+    def test_non_chat_requests_keep_existing_responses_transport(self):
+        self.assertIsNot(OpenRouterProvider.generate, OpenAIProvider.generate)
+        self.provider.generate(self.request)
+        self.client.responses.create.assert_called_once()
+        self.client.chat.completions.create.assert_not_called()
+
+    def test_chat_request_uses_documented_chat_completions_transport(self):
+        chat_request = chat_request_for_test()
+        result = self.provider.generate(chat_request)
+        sent = self.client.chat.completions.create.call_args.kwargs
+        self.assertEqual(set(sent), {"model", "messages"})
+        self.assertEqual(sent["model"], MODEL)
+        self.assertEqual(sent["messages"][0], {
+            "role": "system",
+            "content": chat_request.system_prompt + "\n\nOutput constraints:\n" + "\n".join(chat_request.output_constraints),
+        })
+        self.assertEqual(json.loads(sent["messages"][1]["content"]), {
+            "user_prompt": chat_request.user_prompt,
+            "prompt_version": chat_request.prompt_version,
+            "context": chat_request.context,
+        })
+        self.assertEqual(result, AIResponse("  report  ", "openrouter"))
+        self.client.responses.create.assert_not_called()
 
     def test_explicit_prompt_fields_and_transient_request_map_without_tools_or_fallbacks(self):
         result = self.provider.generate(self.request)
@@ -211,9 +246,10 @@ class OpenRouterProviderTests(NoNetwork, SimpleTestCase):
         self.assertEqual([row["notes"] for row in data["growth_records"]], [str(i) for i in range(50)])
         self.assertIsInstance(records[0]["weight"], Decimal)
 
-    def test_empty_invalid_and_missing_output_accessor_fail_safely(self):
-        for response in (SimpleNamespace(output_text=""), SimpleNamespace(output_text="  "),
-                         SimpleNamespace(output_text=None), SimpleNamespace(output_text=1), {"text": PRIVATE}):
+    def test_empty_invalid_and_missing_response_output_fail_safely(self):
+        responses = (SimpleNamespace(output_text=""), SimpleNamespace(output_text="  "),
+                     SimpleNamespace(output_text=None), SimpleNamespace(output_text=1), {"text": PRIVATE})
+        for response in responses:
             self.client.responses.create.return_value = response
             with self.assertRaises(AIProviderError) as raised:
                 self.provider.generate(self.request)
@@ -283,6 +319,40 @@ class OpenRouterProviderTests(NoNetwork, SimpleTestCase):
         self.assertEqual(captured[0].headers["authorization"], "Bearer " + FAKE_KEY)
         body = json.loads(captured[0].content)
         self.assertEqual(body, {"model": MODEL, "store": False, "truncation": "disabled", **normalize_request(self.request)[0]})
+        self.assertNotIn(FAKE_KEY, captured[0].content.decode())
+
+    def test_sdk_mock_transport_uses_chat_completions_only_for_chat(self):
+        captured = []
+
+        def respond(request):
+            captured.append(request)
+            return httpx2.Response(200, json={
+                "id": "chatcmpl_fake", "object": "chat.completion", "created": 0, "model": MODEL,
+                "choices": [{"index": 0, "finish_reason": "stop",
+                             "message": {"role": "assistant", "content": "Đàn bò demo chính"}}],
+            })
+
+        chat_request = chat_request_for_test()
+        with httpx2.Client(transport=httpx2.MockTransport(respond)) as http_client:
+            provider = OpenRouterProvider(configuration(), client_factory=lambda **kwargs: openai.OpenAI(http_client=http_client, **kwargs))
+            try:
+                result = provider.generate(chat_request)
+            finally:
+                provider.client.close()
+
+        self.assertEqual(result, AIResponse("Đàn bò demo chính", "openrouter"))
+        self.assertEqual(len(captured), 1)
+        self.assertEqual(str(captured[0].url), BASE_URL + "/chat/completions")
+        body = json.loads(captured[0].content)
+        normalized = normalize_request(chat_request)[0]
+        self.assertEqual(body, {
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": normalized["instructions"]},
+                {"role": "user", "content": normalized["input"]},
+            ],
+        })
+        self.assertEqual(captured[0].headers["authorization"], "Bearer " + FAKE_KEY)
         self.assertNotIn(FAKE_KEY, captured[0].content.decode())
 
     def test_real_sdk_transport_rate_limit_has_no_retry(self):

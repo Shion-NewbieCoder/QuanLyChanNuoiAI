@@ -7,6 +7,9 @@
   const questionField = form.querySelector("[name=question]");
   const errorBox = root.querySelector("[data-chat-error]");
   const submitButton = form.querySelector("[type=submit]");
+  const maxHistoryMessages = 6;
+  const maxHistoryContentLength = 500;
+  let conversation = [];
 
   const appendMessage = (speaker, text) => {
     const item = document.createElement("div");
@@ -41,11 +44,22 @@
           "Content-Type": "application/json",
           "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value,
         },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          question,
+          history: conversation.slice(-maxHistoryMessages).map(({ role, content }) => ({
+            role,
+            content: content.slice(0, maxHistoryContentLength),
+          })),
+        }),
       });
       const payload = await response.json();
       if (!response.ok) throw new Error(payload.message || "Không thể gửi câu hỏi lúc này.");
       appendMessage("assistant", payload.answer);
+      conversation = [
+        ...conversation,
+        { role: "user", content: question },
+        { role: "assistant", content: payload.answer },
+      ].slice(-maxHistoryMessages);
     } catch (error) {
       errorBox.textContent = error.message || "Không thể gửi câu hỏi lúc này.";
     } finally {

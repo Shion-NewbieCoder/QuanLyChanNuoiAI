@@ -1,20 +1,25 @@
-"""OpenRouter via the existing Responses transport; live compatibility still needs smoke testing."""
+"""OpenRouter adapter using its documented Chat Completions endpoint."""
 
-from openai import OpenAI
+from openai import (
+    APIConnectionError,
+    APIResponseValidationError,
+    APITimeoutError,
+    AuthenticationError,
+    BadRequestError,
+    NotFoundError,
+    OpenAI,
+    PermissionDeniedError,
+    RateLimitError,
+)
 
 from config.environment import OpenRouterConfiguration
 
-from .openai_provider import OpenAIProvider
-from .providers import AIConfigurationError
+from .openai_provider import OpenAIProvider, normalize_request
+from .providers import AIConfigurationError, AIErrorCategory, AIProviderError, AIResponse
 
 
 class OpenRouterProvider(OpenAIProvider):
-    """Reuse serialization, size guard, normalization and SDK error mapping unchanged.
-
-    Only client configuration and the provider marker differ. Keeping store=False
-    and truncation=disabled is intentional; offline tests cannot prove endpoint
-    acceptance of these parameters for the selected free model.
-    """
+    """Keep the existing configuration and serializer, with OpenRouter's chat API."""
 
     name = "openrouter"
 
@@ -33,3 +38,48 @@ class OpenRouterProvider(OpenAIProvider):
             )
         except Exception:
             raise AIConfigurationError("AI provider configuration is invalid.") from None
+
+    def generate(self, request):
+        if request.prompt_version != "livestock-chat-v1":
+            return super().generate(request)
+
+        content, encoded = normalize_request(request)
+        if len(encoded) > self.configuration.max_input_bytes:
+            raise AIProviderError(
+                "AI input is too large.", category=AIErrorCategory.INPUT_TOO_LARGE
+            )
+
+        messages = [
+            {"role": "system", "content": content["instructions"]},
+            {"role": "user", "content": content["input"]},
+        ]
+        try:
+            response = self.client.chat.completions.create(
+                model=self.configuration.model,
+                messages=messages,
+            )
+        except APITimeoutError:
+            raise AIProviderError("AI provider timed out.", category=AIErrorCategory.TIMEOUT) from None
+        except RateLimitError:
+            raise AIProviderError("AI provider rate limit reached.", category=AIErrorCategory.RATE_LIMIT) from None
+        except (AuthenticationError, PermissionDeniedError):
+            raise AIProviderError("AI provider authentication failed.", category=AIErrorCategory.AUTHENTICATION) from None
+        except APIConnectionError:
+            raise AIProviderError("AI provider connection failed.", category=AIErrorCategory.CONNECTION) from None
+        except (BadRequestError, NotFoundError):
+            raise AIProviderError("AI provider model or request is invalid.", category=AIErrorCategory.INVALID_REQUEST) from None
+        except APIResponseValidationError:
+            raise AIProviderError("AI provider returned an invalid response.", category=AIErrorCategory.INVALID_RESPONSE) from None
+        except Exception:
+            raise AIProviderError("AI provider is unavailable.") from None
+
+        try:
+            text = response.choices[0].message.content
+        except Exception:
+            raise AIProviderError("AI provider returned an invalid response.", category=AIErrorCategory.INVALID_RESPONSE) from None
+        if not isinstance(text, str) or not text.strip():
+            raise AIProviderError(
+                "AI provider returned an empty or invalid response.",
+                category=AIErrorCategory.INVALID_RESPONSE,
+            )
+        return AIResponse(text=text, provider=self.name)

@@ -19,7 +19,9 @@ class ChatView(APIView):
     def post(self, request):
         serializer = ChatRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        result = answer_chat_question(request.user, serializer.validated_data["question"])
+        result = answer_chat_question(
+            request.user, serializer.validated_data["question"], serializer.validated_data["history"],
+        )
         return Response({"status": "success", **result})
 
 

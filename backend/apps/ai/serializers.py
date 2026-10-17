@@ -5,6 +5,9 @@ from rest_framework import serializers
 from apps.herds.models import Herd
 
 
+MAX_CHAT_HISTORY_MESSAGES = 6
+
+
 class AIRequestSerializer(serializers.Serializer):
     """Only application-defined selection fields; never accept client instructions."""
 
@@ -61,3 +64,16 @@ class GrowthReportRequestSerializer(AIRequestSerializer):
 
 class ChatRequestSerializer(AIRequestSerializer):
     question = serializers.CharField(max_length=500, trim_whitespace=True)
+    history = serializers.ListField(
+        child=serializers.DictField(), required=False, default=list, max_length=MAX_CHAT_HISTORY_MESSAGES,
+    )
+
+    def validate_history(self, value):
+        for index, message in enumerate(value):
+            if set(message) != {"role", "content"}:
+                raise serializers.ValidationError({index: "Each message must contain only role and content."})
+            if message["role"] not in ("user", "assistant"):
+                raise serializers.ValidationError({index: "Unsupported message role."})
+            if not isinstance(message["content"], str) or not message["content"].strip() or len(message["content"]) > 500:
+                raise serializers.ValidationError({index: "Message content must contain 1 to 500 characters."})
+        return value
