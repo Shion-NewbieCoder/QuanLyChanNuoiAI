@@ -124,7 +124,7 @@ chỉ đọc dữ liệu chăn nuôi đã ghi nhận, không chẩn đoán hoặ
 Trong workspace hiện tại, kiểm tra offline đạt 41/41 test `apps.ai.test_chat` và 438/438 test
 trong `apps`; `manage.py check`, `makemigrations --check --dry-run` và `git diff --check` đều đạt.
 F5 smoke test dùng launcher Django source hiện tại để kiểm tra câu hỏi đếm đàn, đàn nhiều nhất và
-đàn ít nhất. Thay đổi source/test của Task 1 vẫn nằm trong workspace, chưa commit hoặc push. Các
+đàn ít nhất. Các thay đổi source/test của Task 1 đã được đưa lên GitHub trong commit. Các
 kết quả này không thay thế hay viết lại tổng số test lịch sử trong báo cáo gốc.
 
 F5 hiện chạy Django source qua `tools/run_demo.py`. `DEMO_PORTABLE/DEMO.exe` vẫn là lối chạy

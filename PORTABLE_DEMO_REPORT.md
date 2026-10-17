@@ -150,7 +150,7 @@ Sau báo cáo gốc, chatbot hỏi đáp dữ liệu chăn nuôi được bổ s
 cạnh ba chức năng AI gốc Reminder, Herd Summary và Growth Report. Trong workspace hiện tại, kiểm tra
 offline đạt: chat 41/41 test, toàn bộ `apps` 438/438 test, Django check, migration drift check và
 `git diff --check`. F5 smoke test qua Django source bao gồm câu hỏi đếm đàn, đàn nhiều nhất và đàn
-ít nhất. Các thay đổi Task 1 còn ở workspace, chưa commit/push.
+ít nhất. Các thay đổi source/test của Task 1 đã được đưa lên GitHub trong commit.
 
 Không có AI live test mới. KT3 prompt evaluation trước đây chỉ áp dụng cho ba chức năng AI gốc,
 không đánh giá chatbot. Báo cáo này không khẳng định `DEMO.exe` đã được build lại hoặc kiểm chứng
