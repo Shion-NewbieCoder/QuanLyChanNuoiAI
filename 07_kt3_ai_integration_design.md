@@ -149,6 +149,8 @@ Không hard-code/commit/bundle key, không gửi key vào prompt/browser/respons
 
 Prompt definitions tách khỏi business data-selection logic. Adapter không tự query DB hoặc chọn nguồn bổ sung. Giữ provider/orchestrator boundary; representation cụ thể thuộc planning. Không general chatbot, không arbitrary user-written prompts tới provider. Task này không tạo prompt code/files.
 
+Scope clarification — 2026-10-17: chatbot hỏi đáp được bổ sung sau theo yêu cầu của giảng viên và được mô tả trong README; câu loại trừ ở trên chỉ thuộc phạm vi thiết kế KT3 gốc, không mô tả trạng thái ứng dụng hiện tại hoặc thay đổi ba feature contracts ban đầu.
+
 ## 7. Safety and Grounding Rules
 
 - Chỉ supplied source facts; reference/support only.

@@ -76,6 +76,7 @@ Chi tiết kết quả và giới hạn kiểm chứng: [PORTABLE_DEMO_REPORT.md
 - API lịch vaccine, bản ghi tiêm, tăng trưởng, sinh sản và xuất bán.
 - Thống kê tăng trưởng, chi phí, tỷ lệ hao hụt và doanh thu suy ra từ dữ liệu nguồn.
 - AI nhắc lịch vaccine, tóm tắt đàn và báo cáo tăng trưởng.
+- Chatbot hỏi đáp dữ liệu chăn nuôi, là phần mở rộng theo yêu cầu bổ sung của giảng viên.
 - Django Dashboard tại `/dashboard/`.
 - Giao diện Django đầy đủ cho danh sách, chi tiết, thêm, sửa và xác nhận xóa
   các dữ liệu nghiệp vụ; tìm kiếm/lọc/sắp xếp và nút thao tác theo vai trò.
@@ -106,8 +107,8 @@ các trường văn bản tự do khác giữ nguyên hợp đồng hiện có.
 Trang danh sách gửi `search`, exact filters và `ordering` đến bộ lọc backend
 đã có; phân trang 20 dòng. Thống kê tổng hợp toàn bộ dữ liệu đã ghi nhận qua
 services hiện có. AI trả kết quả trong trang HTML, không lưu kết quả vào CSDL;
-khi chưa cấu hình provider hoặc provider gặp lỗi, trang hiển thị thông báo an toàn. Không có chatbot hoặc
-chức năng chẩn đoán.
+khi chưa cấu hình provider hoặc provider gặp lỗi, trang hiển thị thông báo an toàn.
+Trang AI Assistant có chatbot hỏi đáp dữ liệu chăn nuôi.
 
 CSS có bố cục desktop/tablet/mobile, bảng cuộn ngang và danh mục thu gọn trên
 màn hình nhỏ. Bootstrap 5.3.3 được lưu tại `backend/static/vendor/bootstrap/`
@@ -278,12 +279,19 @@ Phân quyền được kiểm tra ở backend; việc ẩn nút trên giao diệ
 
 ## Chức năng AI
 
-Trang AI Assistant có khu vực hỏi đáp dữ liệu chăn nuôi. Backend chỉ truy vấn các nhóm dữ liệu
-trong danh sách cho phép được nhận diện từ câu hỏi, giới hạn số bản ghi và từ chối câu ngoài
-phạm vi trước khi gọi provider; câu trả lời không được lưu, không thay đổi dữ liệu và không dùng
-để tư vấn thú y.
+Ba chức năng AI trong đề gốc là **AI Reminder** (nhắc lịch vaccine), **AI Herd Summary**
+(tóm tắt đàn) và **AI Growth Report** (báo cáo tăng trưởng). Chatbot hỏi đáp dữ liệu chăn nuôi
+là phần mở rộng theo yêu cầu bổ sung của giảng viên, tách biệt với ba chức năng đó.
 
-Ba feature hiện có: **AI Reminder** (nhắc lịch vaccine), **AI Herd Summary** (tóm tắt đàn), **AI Growth Report** (báo cáo tăng trưởng).
+Chatbot chỉ hỗ trợ câu hỏi về dữ liệu đã ghi nhận trong hệ thống. Backend chọn các nguồn
+được phép và giới hạn số bản ghi trước khi chuyển dữ liệu cần thiết vào luồng trả lời. Backend
+dùng bộ nhận diện phạm vi dựa trên từ khóa hiện tại; các câu được nhận diện rõ là ngoài phạm vi
+sẽ bị từ chối trước khi truy vấn nguồn hoặc gọi provider. Bộ nhận diện không bảo đảm phân loại
+đúng mọi cách diễn đạt. Một số thống kê đàn như
+đếm, nhiều nhất và ít nhất được tính trực tiếp từ database. Nếu dữ liệu không đủ, chatbot phải
+nêu rõ; câu trả lời chỉ mang tính tham khảo, không chẩn đoán, kê thuốc, dự báo hay tư vấn chuyên môn.
+Chat không ghi tin nhắn/câu trả lời vào database và không thay đổi business data; hội thoại chỉ
+tồn tại tạm thời trên trang hiện tại.
 
 Các endpoint hiện có:
 
@@ -291,6 +299,7 @@ Các endpoint hiện có:
 POST /api/ai/reminders
 POST /api/ai/herd-summary
 POST /api/ai/growth-report
+POST /api/ai/chat
 ```
 
 AI chỉ nhận factual data đã được giảm thiểu theo contract và quyền người dùng. Output chỉ dùng để trình bày, không thay đổi business record, không ghi lịch sử AI vào database và luôn qua validation/safety boundary. `source_count`, các metric tăng trưởng và phân loại lịch vaccine do application kiểm soát, không do AI quyết định.
@@ -303,7 +312,7 @@ Cấu hình primary provider qua environment: `AI_PROVIDER`, `OPENROUTER_API_KEY
 
 AI chỉ cung cấp thông tin tham khảo, không thay thế bác sĩ thú y/kỹ sư chăn nuôi. Kết quả là transient, không ghi đè dữ liệu nghiệp vụ. Live inference không được bảo đảm luôn thành công: cấu hình, giới hạn provider, timeout hoặc response không hợp lệ được xử lý bằng lỗi an toàn.
 
-Minh chứng thử nghiệm **V1 → V2 → V3**, gồm kết quả và giới hạn thực tế, nằm tại [KT3_AI_PROMPT_EXPERIMENTS.md](KT3_AI_PROMPT_EXPERIMENTS.md). Phiên bản production được chọn và sinh viên phê duyệt: **Reminder V2, Herd Summary V3, Growth Report V2**.
+Minh chứng thử nghiệm **V1 → V2 → V3**, gồm kết quả và giới hạn thực tế, nằm tại [KT3_AI_PROMPT_EXPERIMENTS.md](KT3_AI_PROMPT_EXPERIMENTS.md). Đánh giá prompt KT3 này chỉ áp dụng cho ba chức năng gốc; không phải kết quả đánh giá chatbot. Các phiên bản production đã được chọn và được sinh viên phê duyệt: **Reminder V2, Herd Summary V3, Growth Report V2**.
 
 ## React/Vite scaffold
 
@@ -348,7 +357,7 @@ Frontend, từ `frontend/`:
 npm run build
 ```
 
-Evidence gần nhất ngày 2026-09-08:
+Evidence của lần kiểm tra ngày 2026-09-08 (mốc lịch sử):
 
 - Backend sau UI pass: `288/288` tests PASS (266 regression cũ + 22 UI).
 - Focused UI: `22/22` tests PASS; 15 trang chính đã kiểm tra qua HTTP có đăng nhập.
@@ -358,6 +367,14 @@ Evidence gần nhất ngày 2026-09-08:
 - Security regression: `57/57` focused tests PASS.
 - Vite production build: PASS.
 - Frontend lint: NOT CONFIGURED.
+
+### Cập nhật workspace ngày 2026-10-17
+
+Sau mốc trên, chatbot hỏi đáp dữ liệu chăn nuôi được bổ sung theo yêu cầu của giảng viên.
+Ở workspace hiện tại, `apps.ai.test_chat` đạt 41/41 và `apps` đạt 438/438; Django check,
+migration drift check và `git diff --check` đều đạt. Smoke test F5 qua Django source đã kiểm tra
+câu hỏi đếm đàn, đàn nhiều nhất và đàn ít nhất. Đây là kiểm tra source hiện tại, không phải kiểm tra
+bản portable. Không có AI live test mới; đánh giá prompt KT3 vẫn chỉ áp dụng cho ba chức năng gốc.
 
 ## Ghi chú bảo mật và giới hạn
 

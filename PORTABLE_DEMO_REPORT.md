@@ -138,3 +138,21 @@ cục bộ, không commit dữ liệu kiểm thử hoặc binary vào Git.
 bàn giao bộ portable cùng source. Giới hạn xác minh còn lại là thao tác GUI
 F5/double-click thực tế và kiểm tra trên máy Windows khác; không có blocker code
 được phát hiện. Không thay đổi nghiệp vụ hoặc mở rộng sang tính năng UI mới.
+
+## Addendum — 2026-10-17 (workspace update after this report)
+
+Các kết quả phía trên ghi lại lần xác minh portable ngày 2026-09-09; các ghi chú F5 trong phần đó
+phản ánh cấu hình tại thời điểm ấy. Cấu hình F5 hiện tại trong `.vscode/launch.json` chạy Django
+source bằng `python .\tools\run_demo.py`. Chạy `DEMO_PORTABLE/DEMO.exe` trực tiếp vẫn là lối
+chạy portable riêng.
+
+Sau báo cáo gốc, chatbot hỏi đáp dữ liệu chăn nuôi được bổ sung theo yêu cầu của giảng viên, bên
+cạnh ba chức năng AI gốc Reminder, Herd Summary và Growth Report. Trong workspace hiện tại, kiểm tra
+offline đạt: chat 41/41 test, toàn bộ `apps` 438/438 test, Django check, migration drift check và
+`git diff --check`. F5 smoke test qua Django source bao gồm câu hỏi đếm đàn, đàn nhiều nhất và đàn
+ít nhất. Các thay đổi Task 1 còn ở workspace, chưa commit/push.
+
+Không có AI live test mới. KT3 prompt evaluation trước đây chỉ áp dụng cho ba chức năng AI gốc,
+không đánh giá chatbot. Báo cáo này không khẳng định `DEMO.exe` đã được build lại hoặc kiểm chứng
+với chatbot mới; các test ở trên là kiểm tra source, không phải kiểm thử portable. Không có API key
+nào được tuyên bố là đã đóng gói vào `DEMO.exe`.

@@ -171,22 +171,20 @@ def _is_counted_herd_list_question(question):
 
 def _is_largest_herd_quantity_question(question):
     normalized = f" {_normalize_question(question)} "
-    asks_quantity = " so luong " in normalized or " bao nhieu con " in normalized
     asks_for_largest = (
         re.search(r"\bnhieu\b.*\bnhat\b", normalized) is not None
         or any(term in normalized for term in (" lon nhat ", " cao nhat ", " dong nhat "))
     )
-    return asks_quantity and asks_for_largest
+    return asks_for_largest
 
 
 def _is_smallest_herd_quantity_question(question):
     normalized = f" {_normalize_question(question)} "
-    asks_quantity = " so luong " in normalized or " bao nhieu con " in normalized
     asks_for_smallest = (
         re.search(r"\bit\b.*\bnhat\b", normalized) is not None
         or any(term in normalized for term in (" it con nhat ", " thap nhat ", " nho nhat "))
     )
-    return asks_quantity and asks_for_smallest
+    return asks_for_smallest
 
 
 def _herd_matches(question):

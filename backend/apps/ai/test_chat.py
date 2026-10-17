@@ -129,6 +129,22 @@ class ChatEndpointTests(TestCase):
                 "Đàn nào đông nhất và có bao nhiêu con?",
                 "Đàn có số lượng ghi nhận nhiều nhất: CHAT-MAX — Đàn có số lượng lớn (125 con).",
             ),
+            (
+                "Đàn nào nhiều nhất?",
+                "Đàn có số lượng ghi nhận nhiều nhất: CHAT-MAX — Đàn có số lượng lớn (125 con).",
+            ),
+            (
+                "Đàn nào ít nhất?",
+                "Đàn có số lượng ghi nhận ít nhất: CHAT-MIN — Đàn có số lượng nhỏ (3 con).",
+            ),
+            (
+                "Đàn nào có nhiều con nhất?",
+                "Đàn có số lượng ghi nhận nhiều nhất: CHAT-MAX — Đàn có số lượng lớn (125 con).",
+            ),
+            (
+                "Đàn nào có ít con nhất?",
+                "Đàn có số lượng ghi nhận ít nhất: CHAT-MIN — Đàn có số lượng nhỏ (3 con).",
+            ),
         )
         fake_provider = self.fake_provider()
         for question, expected_answer in questions:

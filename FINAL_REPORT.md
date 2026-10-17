@@ -113,3 +113,23 @@ DELIVERY_DECISION: READY FOR DELIVERY
 NEXT_PROMPT: NONE
 BACKTRACK_REQUIRED: NONE
 ```
+
+## Addendum — 2026-10-17 (cập nhật workspace sau báo cáo này)
+
+Báo cáo có ngày ở trên ghi nhận trạng thái được xác minh vào 2026-09-08. Sau thời điểm đó, chatbot
+hỏi đáp dữ liệu chăn nuôi được bổ sung theo yêu cầu của giảng viên; đây là phần mở rộng, tách biệt
+với ba chức năng AI gốc: Reminder, Herd Summary và Growth Report. Câu trả lời chat là tạm thời,
+chỉ đọc dữ liệu chăn nuôi đã ghi nhận, không chẩn đoán hoặc đưa ra tư vấn chuyên môn.
+
+Trong workspace hiện tại, kiểm tra offline đạt 41/41 test `apps.ai.test_chat` và 438/438 test
+trong `apps`; `manage.py check`, `makemigrations --check --dry-run` và `git diff --check` đều đạt.
+F5 smoke test dùng launcher Django source hiện tại để kiểm tra câu hỏi đếm đàn, đàn nhiều nhất và
+đàn ít nhất. Thay đổi source/test của Task 1 vẫn nằm trong workspace, chưa commit hoặc push. Các
+kết quả này không thay thế hay viết lại tổng số test lịch sử trong báo cáo gốc.
+
+F5 hiện chạy Django source qua `tools/run_demo.py`. `DEMO_PORTABLE/DEMO.exe` vẫn là lối chạy
+portable riêng; addendum này không khẳng định EXE đã được build lại hoặc kiểm chứng với thay đổi
+chatbot. Không có AI live test mới cho chatbot trong lần cập nhật này. Đánh giá prompt KT3 trước đây
+chỉ áp dụng cho ba chức năng AI gốc, không phải đánh giá chatbot. Các nhận xét về provider ở mục 7
+và 9 mô tả snapshot source ngày 2026-09-08, không phải khẳng định hiện tại rằng source không có
+provider adapter.
